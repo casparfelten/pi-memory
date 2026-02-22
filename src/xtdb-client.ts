@@ -36,11 +36,20 @@ export class XtdbClient {
   }
 
   async get(id: string): Promise<Record<string, unknown> | null> {
-    const response = await this.http(`/_xtdb/entity?eid=${encodeURIComponent(id)}`, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    });
-    return (await response.json()) as Record<string, unknown> | null;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    try {
+      const response = await fetch(`${this.baseUrl}/_xtdb/entity?eid=${encodeURIComponent(id)}`, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        signal: controller.signal,
+      });
+      if (response.status === 404) return null;
+      if (!response.ok) throw new Error(`XTDB HTTP ${response.status} ${response.statusText}`);
+      return (await response.json()) as Record<string, unknown> | null;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   async getAsOf(id: string, timestamp: string): Promise<Record<string, unknown> | null> {

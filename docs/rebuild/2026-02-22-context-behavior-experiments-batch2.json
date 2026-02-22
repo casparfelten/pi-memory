@@ -1,0 +1,762 @@
+{
+  "startedAt": "2026-02-22T13:45:30.124Z",
+  "xtdbBaseUrl": "http://172.17.0.1:3000",
+  "methodologyRef": "docs/rebuild/context-behavior-methodology.md",
+  "experiments": [
+    {
+      "id": "exp-1-control-triage",
+      "variant": "control",
+      "taskShape": "broad triage across noisy files",
+      "systemPrompt": "You are a careful investigator. Produce an accurate short brief.",
+      "xtdbBaseUrl": "http://172.17.0.1:3000",
+      "sessionId": "exp-1-control-triage-1771767911432",
+      "runtimeMs": 2032,
+      "firstDeactivateStep": null,
+      "metrics": {
+        "active": {
+          "start": 1,
+          "peak": 5,
+          "end": 5,
+          "series": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "metadata": {
+          "start": 0,
+          "end": 5,
+          "series": [
+            0,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        "activateCount": 0,
+        "deactivateCount": 0,
+        "recallEvents": []
+      },
+      "events": [
+        {
+          "step": 1,
+          "at": "2026-02-22T13:45:13.535Z",
+          "type": "read",
+          "path": "plans/launch.md",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/plans/launch.md",
+          "ok": true
+        },
+        {
+          "step": 2,
+          "at": "2026-02-22T13:45:13.940Z",
+          "type": "read",
+          "path": "logs/app.log",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/logs/app.log",
+          "ok": true
+        },
+        {
+          "step": 3,
+          "at": "2026-02-22T13:45:14.346Z",
+          "type": "read",
+          "path": "logs/sre.log",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/logs/sre.log",
+          "ok": true
+        },
+        {
+          "step": 4,
+          "at": "2026-02-22T13:45:14.752Z",
+          "type": "read",
+          "path": "retro/notes.md",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/retro/notes.md",
+          "ok": true
+        }
+      ],
+      "trajectory": [
+        {
+          "at": "2026-02-22T13:45:12.721Z",
+          "step": 0,
+          "label": "after-load",
+          "activeCount": 1,
+          "metadataCount": 0,
+          "activeIds": [
+            "chat:exp-1-control-triage-1771767911432"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:13.535Z",
+          "step": 1,
+          "label": "after read:plans/launch.md",
+          "activeCount": 2,
+          "metadataCount": 2,
+          "activeIds": [
+            "chat:exp-1-control-triage-1771767911432",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/plans/launch.md"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:13.940Z",
+          "step": 2,
+          "label": "after read:logs/app.log",
+          "activeCount": 3,
+          "metadataCount": 3,
+          "activeIds": [
+            "chat:exp-1-control-triage-1771767911432",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/plans/launch.md",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/logs/app.log"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:14.346Z",
+          "step": 3,
+          "label": "after read:logs/sre.log",
+          "activeCount": 4,
+          "metadataCount": 4,
+          "activeIds": [
+            "chat:exp-1-control-triage-1771767911432",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/plans/launch.md",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/logs/app.log",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/logs/sre.log"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:14.752Z",
+          "step": 4,
+          "label": "after read:retro/notes.md",
+          "activeCount": 5,
+          "metadataCount": 5,
+          "activeIds": [
+            "chat:exp-1-control-triage-1771767911432",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/plans/launch.md",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/logs/app.log",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/logs/sre.log",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-1-control-triage/retro/notes.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "exp-2-policy-strong-contradiction",
+      "variant": "policy-strong",
+      "taskShape": "contradiction resolution (planning vs runtime)",
+      "systemPrompt": "Keep active context minimal. Read selectively, deactivate stale context after extraction, and recall only when needed for synthesis.",
+      "xtdbBaseUrl": "http://172.17.0.1:3000",
+      "sessionId": "exp-2-policy-strong-contradiction-1771767916772",
+      "runtimeMs": 1619,
+      "firstDeactivateStep": 2,
+      "metrics": {
+        "active": {
+          "start": 1,
+          "peak": 3,
+          "end": 3,
+          "series": [
+            1,
+            2,
+            1,
+            2,
+            1,
+            2,
+            1,
+            2,
+            3,
+            3
+          ]
+        },
+        "metadata": {
+          "start": 0,
+          "end": 4,
+          "series": [
+            0,
+            1,
+            1,
+            2,
+            2,
+            3,
+            3,
+            3,
+            4,
+            4
+          ]
+        },
+        "activateCount": 1,
+        "deactivateCount": 3,
+        "recallEvents": [
+          {
+            "step": 7,
+            "at": "2026-02-22T13:45:19.202Z",
+            "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/plans/design.md",
+            "mode": "reactivate-after-deactivate",
+            "reason": "recall design assumption for contradiction check"
+          }
+        ]
+      },
+      "events": [
+        {
+          "step": 1,
+          "at": "2026-02-22T13:45:18.392Z",
+          "type": "read",
+          "path": "plans/design.md",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/plans/design.md",
+          "ok": true
+        },
+        {
+          "step": 2,
+          "at": "2026-02-22T13:45:18.392Z",
+          "type": "deactivate",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/plans/design.md",
+          "reason": "switching to runtime evidence",
+          "ok": true
+        },
+        {
+          "step": 3,
+          "at": "2026-02-22T13:45:18.798Z",
+          "type": "read",
+          "path": "logs/runtime.log",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/logs/runtime.log",
+          "ok": true
+        },
+        {
+          "step": 4,
+          "at": "2026-02-22T13:45:18.798Z",
+          "type": "deactivate",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/logs/runtime.log",
+          "reason": "runtime facts extracted",
+          "ok": true
+        },
+        {
+          "step": 5,
+          "at": "2026-02-22T13:45:19.202Z",
+          "type": "read",
+          "path": "analytics/recon.csv",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/analytics/recon.csv",
+          "ok": true
+        },
+        {
+          "step": 6,
+          "at": "2026-02-22T13:45:19.202Z",
+          "type": "deactivate",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/analytics/recon.csv",
+          "reason": "trend captured",
+          "ok": true
+        },
+        {
+          "step": 7,
+          "at": "2026-02-22T13:45:19.202Z",
+          "type": "activate",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/plans/design.md",
+          "reason": "recall design assumption for contradiction check",
+          "ok": true
+        },
+        {
+          "step": 8,
+          "at": "2026-02-22T13:45:19.606Z",
+          "type": "read",
+          "path": "runbooks/recon.md",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/runbooks/recon.md",
+          "ok": true
+        },
+        {
+          "step": 9,
+          "at": "2026-02-22T13:45:19.606Z",
+          "type": "synthesis-note",
+          "note": "contradiction resolved with runtime + runbook recovery"
+        }
+      ],
+      "trajectory": [
+        {
+          "at": "2026-02-22T13:45:17.987Z",
+          "step": 0,
+          "label": "after-load",
+          "activeCount": 1,
+          "metadataCount": 0,
+          "activeIds": [
+            "chat:exp-2-policy-strong-contradiction-1771767916772"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:18.392Z",
+          "step": 1,
+          "label": "after read:plans/design.md",
+          "activeCount": 2,
+          "metadataCount": 1,
+          "activeIds": [
+            "chat:exp-2-policy-strong-contradiction-1771767916772",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/plans/design.md"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:18.392Z",
+          "step": 2,
+          "label": "after deactivate:file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/plans/design.md",
+          "activeCount": 1,
+          "metadataCount": 1,
+          "activeIds": [
+            "chat:exp-2-policy-strong-contradiction-1771767916772"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:18.798Z",
+          "step": 3,
+          "label": "after read:logs/runtime.log",
+          "activeCount": 2,
+          "metadataCount": 2,
+          "activeIds": [
+            "chat:exp-2-policy-strong-contradiction-1771767916772",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/logs/runtime.log"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:18.798Z",
+          "step": 4,
+          "label": "after deactivate:file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/logs/runtime.log",
+          "activeCount": 1,
+          "metadataCount": 2,
+          "activeIds": [
+            "chat:exp-2-policy-strong-contradiction-1771767916772"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:19.202Z",
+          "step": 5,
+          "label": "after read:analytics/recon.csv",
+          "activeCount": 2,
+          "metadataCount": 3,
+          "activeIds": [
+            "chat:exp-2-policy-strong-contradiction-1771767916772",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/analytics/recon.csv"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:19.202Z",
+          "step": 6,
+          "label": "after deactivate:file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/analytics/recon.csv",
+          "activeCount": 1,
+          "metadataCount": 3,
+          "activeIds": [
+            "chat:exp-2-policy-strong-contradiction-1771767916772"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:19.202Z",
+          "step": 7,
+          "label": "after activate:file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/plans/design.md",
+          "activeCount": 2,
+          "metadataCount": 3,
+          "activeIds": [
+            "chat:exp-2-policy-strong-contradiction-1771767916772",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/plans/design.md"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:19.606Z",
+          "step": 8,
+          "label": "after read:runbooks/recon.md",
+          "activeCount": 3,
+          "metadataCount": 4,
+          "activeIds": [
+            "chat:exp-2-policy-strong-contradiction-1771767916772",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/plans/design.md",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/runbooks/recon.md"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:19.606Z",
+          "step": 10,
+          "label": "after synthesis-note",
+          "activeCount": 3,
+          "metadataCount": 4,
+          "activeIds": [
+            "chat:exp-2-policy-strong-contradiction-1771767916772",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/plans/design.md",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/runbooks/recon.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "exp-3-policy-light-interruption",
+      "variant": "policy-light",
+      "taskShape": "interrupted workflow with return/recall",
+      "systemPrompt": "Use compact working context. Prune stale details when task focus changes.",
+      "xtdbBaseUrl": "http://172.17.0.1:3000",
+      "sessionId": "exp-3-policy-light-interruption-1771767923248",
+      "runtimeMs": 1623,
+      "firstDeactivateStep": 3,
+      "metrics": {
+        "active": {
+          "start": 1,
+          "peak": 3,
+          "end": 2,
+          "series": [
+            1,
+            2,
+            3,
+            2,
+            3,
+            2,
+            3,
+            2,
+            1,
+            2
+          ]
+        },
+        "metadata": {
+          "start": 0,
+          "end": 4,
+          "series": [
+            0,
+            1,
+            2,
+            2,
+            3,
+            3,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "activateCount": 1,
+        "deactivateCount": 4,
+        "recallEvents": [
+          {
+            "step": 9,
+            "at": "2026-02-22T13:45:26.089Z",
+            "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypA/evidence.md",
+            "mode": "reactivate-after-deactivate",
+            "reason": "return to primary hypothesis synthesis"
+          }
+        ]
+      },
+      "events": [
+        {
+          "step": 1,
+          "at": "2026-02-22T13:45:24.872Z",
+          "type": "read",
+          "path": "hypA/evidence.md",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypA/evidence.md",
+          "ok": true
+        },
+        {
+          "step": 2,
+          "at": "2026-02-22T13:45:25.279Z",
+          "type": "read",
+          "path": "hypB/evidence.md",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypB/evidence.md",
+          "ok": true
+        },
+        {
+          "step": 3,
+          "at": "2026-02-22T13:45:25.279Z",
+          "type": "deactivate",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypA/evidence.md",
+          "reason": "focus on competing hypothesis B",
+          "ok": true
+        },
+        {
+          "step": 4,
+          "at": "2026-02-22T13:45:25.685Z",
+          "type": "read",
+          "path": "interrupt/request.md",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/interrupt/request.md",
+          "ok": true
+        },
+        {
+          "step": 5,
+          "at": "2026-02-22T13:45:25.685Z",
+          "type": "deactivate",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypB/evidence.md",
+          "reason": "temporary interruption context switch",
+          "ok": true
+        },
+        {
+          "step": 6,
+          "at": "2026-02-22T13:45:26.089Z",
+          "type": "read",
+          "path": "impact/estimate.md",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/impact/estimate.md",
+          "ok": true
+        },
+        {
+          "step": 7,
+          "at": "2026-02-22T13:45:26.089Z",
+          "type": "deactivate",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/interrupt/request.md",
+          "reason": "interruption handled",
+          "ok": true
+        },
+        {
+          "step": 8,
+          "at": "2026-02-22T13:45:26.089Z",
+          "type": "deactivate",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/impact/estimate.md",
+          "reason": "impact note extracted",
+          "ok": true
+        },
+        {
+          "step": 9,
+          "at": "2026-02-22T13:45:26.089Z",
+          "type": "activate",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypA/evidence.md",
+          "reason": "return to primary hypothesis synthesis",
+          "ok": true
+        }
+      ],
+      "trajectory": [
+        {
+          "at": "2026-02-22T13:45:24.466Z",
+          "step": 0,
+          "label": "after-load",
+          "activeCount": 1,
+          "metadataCount": 0,
+          "activeIds": [
+            "chat:exp-3-policy-light-interruption-1771767923248"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:24.872Z",
+          "step": 1,
+          "label": "after read:hypA/evidence.md",
+          "activeCount": 2,
+          "metadataCount": 1,
+          "activeIds": [
+            "chat:exp-3-policy-light-interruption-1771767923248",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypA/evidence.md"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:25.279Z",
+          "step": 2,
+          "label": "after read:hypB/evidence.md",
+          "activeCount": 3,
+          "metadataCount": 2,
+          "activeIds": [
+            "chat:exp-3-policy-light-interruption-1771767923248",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypA/evidence.md",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypB/evidence.md"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:25.279Z",
+          "step": 3,
+          "label": "after deactivate:file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypA/evidence.md",
+          "activeCount": 2,
+          "metadataCount": 2,
+          "activeIds": [
+            "chat:exp-3-policy-light-interruption-1771767923248",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypB/evidence.md"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:25.685Z",
+          "step": 4,
+          "label": "after read:interrupt/request.md",
+          "activeCount": 3,
+          "metadataCount": 3,
+          "activeIds": [
+            "chat:exp-3-policy-light-interruption-1771767923248",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypB/evidence.md",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/interrupt/request.md"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:25.685Z",
+          "step": 5,
+          "label": "after deactivate:file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypB/evidence.md",
+          "activeCount": 2,
+          "metadataCount": 3,
+          "activeIds": [
+            "chat:exp-3-policy-light-interruption-1771767923248",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/interrupt/request.md"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:26.089Z",
+          "step": 6,
+          "label": "after read:impact/estimate.md",
+          "activeCount": 3,
+          "metadataCount": 4,
+          "activeIds": [
+            "chat:exp-3-policy-light-interruption-1771767923248",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/interrupt/request.md",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/impact/estimate.md"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:26.089Z",
+          "step": 7,
+          "label": "after deactivate:file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/interrupt/request.md",
+          "activeCount": 2,
+          "metadataCount": 4,
+          "activeIds": [
+            "chat:exp-3-policy-light-interruption-1771767923248",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/impact/estimate.md"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:26.089Z",
+          "step": 8,
+          "label": "after deactivate:file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/impact/estimate.md",
+          "activeCount": 1,
+          "metadataCount": 4,
+          "activeIds": [
+            "chat:exp-3-policy-light-interruption-1771767923248"
+          ]
+        },
+        {
+          "at": "2026-02-22T13:45:26.089Z",
+          "step": 9,
+          "label": "after activate:file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypA/evidence.md",
+          "activeCount": 2,
+          "metadataCount": 4,
+          "activeIds": [
+            "chat:exp-3-policy-light-interruption-1771767923248",
+            "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypA/evidence.md"
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "id": "exp-1-control-triage",
+      "variant": "control",
+      "taskShape": "broad triage across noisy files",
+      "runtimeMs": 2032,
+      "active": {
+        "start": 1,
+        "peak": 5,
+        "end": 5,
+        "series": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "metadata": {
+        "start": 0,
+        "end": 5,
+        "series": [
+          0,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "activateCount": 0,
+      "deactivateCount": 0,
+      "recallEvents": [],
+      "firstDeactivateStep": null,
+      "naturalPass": false
+    },
+    {
+      "id": "exp-2-policy-strong-contradiction",
+      "variant": "policy-strong",
+      "taskShape": "contradiction resolution (planning vs runtime)",
+      "runtimeMs": 1619,
+      "active": {
+        "start": 1,
+        "peak": 3,
+        "end": 3,
+        "series": [
+          1,
+          2,
+          1,
+          2,
+          1,
+          2,
+          1,
+          2,
+          3,
+          3
+        ]
+      },
+      "metadata": {
+        "start": 0,
+        "end": 4,
+        "series": [
+          0,
+          1,
+          1,
+          2,
+          2,
+          3,
+          3,
+          3,
+          4,
+          4
+        ]
+      },
+      "activateCount": 1,
+      "deactivateCount": 3,
+      "recallEvents": [
+        {
+          "step": 7,
+          "at": "2026-02-22T13:45:19.202Z",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-2-policy-strong-contradiction/plans/design.md",
+          "mode": "reactivate-after-deactivate",
+          "reason": "recall design assumption for contradiction check"
+        }
+      ],
+      "firstDeactivateStep": 2,
+      "naturalPass": false
+    },
+    {
+      "id": "exp-3-policy-light-interruption",
+      "variant": "policy-light",
+      "taskShape": "interrupted workflow with return/recall",
+      "runtimeMs": 1623,
+      "active": {
+        "start": 1,
+        "peak": 3,
+        "end": 2,
+        "series": [
+          1,
+          2,
+          3,
+          2,
+          3,
+          2,
+          3,
+          2,
+          1,
+          2
+        ]
+      },
+      "metadata": {
+        "start": 0,
+        "end": 4,
+        "series": [
+          0,
+          1,
+          2,
+          2,
+          3,
+          3,
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "activateCount": 1,
+      "deactivateCount": 4,
+      "recallEvents": [
+        {
+          "step": 9,
+          "at": "2026-02-22T13:45:26.089Z",
+          "id": "file:/workspace/pi-memory/tmp/context-behavior-batch2-2026-02-22T13-45-11-431Z/exp-3-policy-light-interruption/hypA/evidence.md",
+          "mode": "reactivate-after-deactivate",
+          "reason": "return to primary hypothesis synthesis"
+        }
+      ],
+      "firstDeactivateStep": 3,
+      "naturalPass": true
+    }
+  ]
+}

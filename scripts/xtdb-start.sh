@@ -14,18 +14,43 @@ if [[ -f "$PID_FILE" ]] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
   exit 0
 fi
 
-# Use pre-built standalone JAR from GitHub releases (includes RocksDB for persistence)
-XTDB_JAR="$XTDB_DIR/xtdb-standalone-rocksdb.jar"
+# Pre-built standalone JARs from GitHub releases
 XTDB_VERSION="1.24.3"
-if [[ ! -f "$XTDB_JAR" ]]; then
-  echo "Downloading XTDB standalone v${XTDB_VERSION}..."
-  curl -fsSL -o "$XTDB_JAR" \
-    "https://github.com/xtdb/xtdb/releases/download/${XTDB_VERSION}/xtdb-standalone-rocksdb.jar"
+XTDB_ROCKSDB_JAR="$XTDB_DIR/xtdb-standalone-rocksdb.jar"
+XTDB_INMEM_JAR="$XTDB_DIR/xtdb-in-memory.jar"
+
+# Try RocksDB first (persistent), fall back to in-memory
+XTDB_JAR=""
+XTDB_MODE=""
+
+if [[ -f "$XTDB_ROCKSDB_JAR" ]] || [[ "${XTDB_PREFER_INMEM:-}" != "1" ]]; then
+  if [[ ! -f "$XTDB_ROCKSDB_JAR" ]]; then
+    echo "Downloading XTDB standalone (RocksDB) v${XTDB_VERSION}..."
+    curl -fsSL -o "$XTDB_ROCKSDB_JAR" \
+      "https://github.com/xtdb/xtdb/releases/download/${XTDB_VERSION}/xtdb-standalone-rocksdb.jar" || true
+  fi
+  if [[ -f "$XTDB_ROCKSDB_JAR" ]]; then
+    XTDB_JAR="$XTDB_ROCKSDB_JAR"
+    XTDB_MODE="rocksdb"
+  fi
 fi
 
-# Write XTDB config (HTTP server on configured port, RocksDB storage in data/)
-XTDB_EDN="$XTDB_DIR/xtdb.edn"
-cat > "$XTDB_EDN" <<EOF
+# In-memory fallback (or explicit preference)
+if [[ -z "$XTDB_JAR" ]] || [[ "${XTDB_PREFER_INMEM:-}" == "1" ]]; then
+  if [[ ! -f "$XTDB_INMEM_JAR" ]]; then
+    echo "Downloading XTDB standalone (in-memory) v${XTDB_VERSION}..."
+    curl -fsSL -o "$XTDB_INMEM_JAR" \
+      "https://github.com/xtdb/xtdb/releases/download/${XTDB_VERSION}/xtdb-in-memory.jar"
+  fi
+  XTDB_JAR="$XTDB_INMEM_JAR"
+  XTDB_MODE="in-memory"
+fi
+
+echo "Starting XTDB ($XTDB_MODE) on port $PORT..."
+
+if [[ "$XTDB_MODE" == "rocksdb" ]]; then
+  XTDB_EDN="$XTDB_DIR/xtdb.edn"
+  cat > "$XTDB_EDN" <<EOF
 {:xtdb.http-server/server {:port ${PORT}}
  :xtdb/index-store {:kv-store {:xtdb/module xtdb.rocksdb/->kv-store
                                 :db-dir "${DATA_DIR}/idx"}}
@@ -34,8 +59,10 @@ cat > "$XTDB_EDN" <<EOF
  :xtdb/tx-log {:kv-store {:xtdb/module xtdb.rocksdb/->kv-store
                            :db-dir "${DATA_DIR}/txs"}}}
 EOF
-
-java -jar "$XTDB_JAR" -f "$XTDB_EDN" > "$LOG_FILE" 2>&1 &
+  java -jar "$XTDB_JAR" -f "$XTDB_EDN" > "$LOG_FILE" 2>&1 &
+else
+  java -jar "$XTDB_JAR" > "$LOG_FILE" 2>&1 &
+fi
 PID=$!
 echo "$PID" > "$PID_FILE"
 

@@ -74,17 +74,35 @@
 - **Accepted deviations/risks:** None.
 
 ### Phase 3
-- **Status:** In Progress
-- **Decision:** _TBD_
-- **Rationale:** _TBD_
-- **Alternatives rejected:** _TBD_
-- **Evidence required:**
-  - [ ] Linked test output/artifacts
-  - [ ] Manual XTDB flow notes (inputs, commands, observed outputs)
-  - [ ] Performance/behavior deltas (if applicable)
+- **Status:** Complete
+- **Decision:** Accept Phase 3 rebuild output and advance to Phase 4.
+- **Rationale:**
+  - Phase 3 implementation scope landed on `phase-3` and includes extension integration plus side-effect indexing behavior required by the spec.
+  - Independent retest recorded **PASS** after evidence-gap closure work, explicitly confirming the prior FAIL condition was resolved.
+  - Phase 3 has been merged to `main`, providing a traceable integration point for subsequent work.
+- **Alternatives rejected:**
+  - Keep Phase 3 open for additional non-required refactor cleanup (rejected: out-of-scope vs. phase acceptance criteria).
+  - Rebuild Phase 3 from scratch on a new branch despite passing independent retest and merge readiness (rejected: redundant churn without risk reduction).
+- **Evidence:**
+  - **Builder branch/commit(s) (what was implemented/fixed):**
+    - Branch: `phase-3`
+    - Primary implementation commit: `2b7391c` (`phase3: add pi extension tools and side-effect indexing`)
+    - Evidence-fix commit: `0bf2a20` (`test: add explicit phase3 evidence for find/grep/bash observation`)
+  - **Independent retest PASS highlights (including prior FAIL closure):**
+    - Retest verdict: **PASS** after adding explicit evidence tests for:
+      - `wrappedFind` side-effects (metadata-only XTDB file object indexing)
+      - `wrappedGrep` side-effects (grep output path extraction/indexing)
+      - `observeToolExecutionEnd` bash-only indexing behavior (and non-bash non-index behavior)
+    - Validation highlights recorded in retest session output:
+      - `npm run build` passed
+      - `npm test` passed with `tests/phase3.test.ts` at 9/9 and full suite 18/18
+    - Explicit closure statement in retest output: prior FAIL condition (missing explicit test coverage for find/grep/bash observation) is closed.
+  - **Merge to `main` commit(s):**
+    - `b90e2e4` — merge of `phase-3` into `main` (`Merge phase-3: extension/tools integration and coverage fixes`).
+- **Accepted deviations/risks:** None.
 
 ### Phase 4
-- **Status:** Pending
+- **Status:** In Progress
 - **Decision:** _TBD_
 - **Rationale:** _TBD_
 - **Alternatives rejected:** _TBD_
@@ -148,7 +166,7 @@
 
 - **Run date:** 2026-02-22
 - **Document owner:** decagent/docs track
-- **Current phase outcomes:** Phase 1 complete; Phase 2 complete; Phase 3 in progress; Phase 4 pending
+- **Current phase outcomes:** Phase 1 complete; Phase 2 complete; Phase 3 complete; Phase 4 in progress
 - **Known governance baseline:**
   - Real XTDB required for acceptance evidence
   - No mock-based acceptance claims

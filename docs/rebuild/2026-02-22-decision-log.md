@@ -102,14 +102,27 @@
 - **Accepted deviations/risks:** None.
 
 ### Phase 4
-- **Status:** In Progress
-- **Decision:** _TBD_
-- **Rationale:** _TBD_
-- **Alternatives rejected:** _TBD_
-- **Evidence required:**
-  - [ ] Linked test output/artifacts
-  - [ ] Manual XTDB flow notes (inputs, commands, observed outputs)
-  - [ ] Final readiness + outstanding risk statement
+- **Status:** Complete
+- **Decision:** Accept Phase 4 rebuild output and move the run into final E2E/reporting.
+- **Rationale:**
+  - Phase 4 implementation delivered watcher + session resume + cursor invalidation robustness on the `phase-4` builder branch and is now merged to `main`.
+  - Independent tester verification recorded **PASS** for Phase 4 and included manual real-XTDB proof steps, satisfying the non-negotiable evidence bar.
+  - No additional scope expansion is required before final E2E/report consolidation.
+- **Alternatives rejected:**
+  - Keep Phase 4 open for further non-required refactor polish (rejected: out-of-scope, no additional acceptance risk reduction).
+  - Re-implement on a fresh branch despite PASS + merge evidence (rejected: redundant churn without new signal).
+- **Evidence:**
+  - **Builder branch/commit (what was implemented):**
+    - Branch: `phase-4`
+    - Commit: `bb9a67b2a682a5646e78abcb4f4e07b9b5fc1e51` (`bb9a67b`)
+    - Implemented files: `src/phase3-extension.ts`, `src/xtdb-client.ts`, `tests/phase4.test.ts`.
+  - **Independent tester PASS highlights + manual XTDB proof:**
+    - Independent tester verdict: **PASS** for Phase 4 (recorded in rebuild run/tester session output).
+    - PASS highlights: watcher/resume/cursor-invalidating behavior validated by phase-specific test coverage and replay checks in the independent test run.
+    - Manual XTDB proof highlights: tester transcript includes real XTDB write/query verification during Phase 4 validation (no mock-only acceptance evidence).
+  - **Merge to `main` commit(s):**
+    - `ae8139a` — merge of `phase-4` into `main` (`Merge phase-4: watcher, session resume, cursor invalidation robustness`).
+- **Accepted deviations/risks:** None.
 
 ## Verification evidence checklist template
 
@@ -166,7 +179,8 @@
 
 - **Run date:** 2026-02-22
 - **Document owner:** decagent/docs track
-- **Current phase outcomes:** Phase 1 complete; Phase 2 complete; Phase 3 complete; Phase 4 in progress
+- **Current phase outcomes:** Phase 1 complete; Phase 2 complete; Phase 3 complete; Phase 4 complete
+- **Final E2E/report stage status:** In Progress
 - **Known governance baseline:**
   - Real XTDB required for acceptance evidence
   - No mock-based acceptance claims

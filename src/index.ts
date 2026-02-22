@@ -2,3 +2,4 @@ export * from './types.js';
 export * from './hashing.js';
 export * from './xtdb-client.js';
 export * from './context-manager.js';
+export * from './phase3-extension.js';

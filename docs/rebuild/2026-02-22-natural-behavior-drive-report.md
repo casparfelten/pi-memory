@@ -1,5 +1,7 @@
 # Natural Behavior Drive Report (2026-02-22)
 
+> **LLM-driven (intended).** Script `scripts/natural-behavior-drive.mjs` uses GPT-4.1 in a real agent loop. However, this run was blocked (missing `OPENAI_API_KEY`) and never executed.
+
 ## Status
 Blocked before live drive execution.
 

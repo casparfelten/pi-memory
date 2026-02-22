@@ -89,34 +89,41 @@ Object states from agent perspective:
 
 ---
 
-## 3) Implementation (as-is, current)
+## 3) Implementation status
 
-This section reflects what is currently implemented in this repository today.
+> Last updated: 2026-02-22 (post strict-rebuild + experiment runs).
 
-### 3.1 What exists now
+This section tracks what exists in the repo, not what the design intends. See sections 1-2 for design intent.
 
-- TypeScript package scaffold and build/test setup (`src`, `dist`, `tests`, `scripts`).
-- Design/spec docs for memory/context architecture in `docs/spec/`.
-- Planning notes and roadmap docs.
+### 3.1 Modules
 
-### 3.2 Current implementation reality
+| Module | Path | Status |
+|--------|------|--------|
+| XTDB client | `src/xtdb-client.ts` | Working against real XTDB (v1 standalone) |
+| Core types | `src/types.ts` | Stable |
+| Content hashing | `src/hashing.ts` | Stable (SHA-256, deterministic) |
+| Context manager | `src/context-manager.ts` | Working (metadata/active pools, cursor processing, context assembly) |
+| Pi extension | `src/phase3-extension.ts` | Working (tool wrapping, activate/deactivate/pin/unpin, watcher, session persist/resume) |
+| Exports | `src/index.ts` | Re-exports all public API |
 
-- The repository currently contains **primarily specification/planning artifacts**.
-- Full runtime behavior described in design docs (complete context manager loop integration, durable object store wiring, watcher lifecycle, adapter behavior) is **not yet fully implemented end-to-end in this repo**.
-- Therefore, this project is best described as an **in-progress context manager design + partial implementation groundwork**.
+### 3.2 Test coverage
 
-### 3.3 Key modules/directories (present now)
+25 tests across 5 suites, all against real XTDB (no mocks for acceptance):
+- `tests/phase1.test.ts` — XTDB client basics (put/get/as-of/history/query)
+- `tests/phase2.test.ts` — Context manager pools and cursor
+- `tests/phase3.test.ts` — Extension tools, side-effect indexing, activation/lock
+- `tests/phase4.test.ts` — Watcher, session resume, cursor invalidation
+- `tests/e2e-final.test.ts` — Full lifecycle continuity
 
-- `src/`: implementation surface (early-stage)
-- `tests/`: automated tests (limited vs final intended behavior)
-- `docs/spec/`: design decisions and evolving spec source material
-- `docs/testing-next-steps.md`: upcoming evaluation protocol/checklist
+### 3.3 Experiment scripts
 
-### 3.4 Known gaps/deviations
+See `scripts/`. Some use a real LLM agent loop, some are scripted API exercises. Reports in `docs/rebuild/` are labelled accordingly.
 
-- No completed, validated end-to-end demonstration yet of all SSOT semantics.
-- Evaluation protocol is newly documented and not yet fully executed at scale.
-- Some decisions remain policy-level in docs rather than enforced in production code paths.
+### 3.4 What is not yet done
+
+- Not integrated into a live Pi coding agent session (extension API is exercised standalone, not inside Pi's event loop).
+- Evaluation plan (`docs/testing-next-steps.md`) is documented but unstarted: no baseline comparison, no ablations, no long-episode stress tests.
+- Some design decisions in sections 1-2 remain policy-level rather than enforced in code (e.g. auto-collapse of old tool results, token budget enforcement).
 
 ---
 

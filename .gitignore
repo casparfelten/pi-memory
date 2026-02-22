@@ -1,6 +1,7 @@
 node_modules/
 dist/
 data/
+tmp/
 xtdb/*.jar
 xtdb/*.log
 xtdb/*.pid

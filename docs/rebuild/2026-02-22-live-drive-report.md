@@ -1,5 +1,7 @@
 # Live Drive Report — 2026-02-22
 
+> **Scripted (no LLM).** Extension API exercised programmatically via `scripts/live-drive-actual-use.mjs`. Validates end-to-end API behaviour and XTDB persistence, not model decision-making.
+
 ## Summary verdict
 
 **PASS** for "live actual use".

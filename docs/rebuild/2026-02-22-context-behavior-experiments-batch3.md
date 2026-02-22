@@ -1,5 +1,7 @@
 # Context-Behavior Live Experiments — Batch 3 (2026-02-22)
 
+> **Scripted (no LLM).** Activate/deactivate/recall calls are hardcoded in `scripts/context-behavior-batch3.mjs`. Validates API mechanics and trajectory shapes, not model decision-making.
+
 - XTDB endpoint: `http://172.17.0.1:3000` (real, no mock/fallback)
 - Method continuation: `docs/rebuild/context-behavior-methodology.md`
 - Experiments executed: 3

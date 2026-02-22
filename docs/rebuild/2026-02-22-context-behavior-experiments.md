@@ -1,4 +1,6 @@
-# Context Behavior Experiments (2026-02-22)
+# Context Behavior Experiments — Batch 1 (2026-02-22)
+
+> **LLM-driven.** GPT-4.1 in a real tool-calling agent loop (`scripts/context-behavior-experiments.mjs`). The model decides which tools to call each turn.
 
 Model: gpt-4.1
 XTDB: http://172.17.0.1:3000

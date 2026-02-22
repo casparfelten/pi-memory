@@ -1,5 +1,7 @@
 # Five Live Drives Report (2026-02-22)
 
+> **Scripted (no LLM).** All tool calls are hardcoded in `scripts/five-live-drives.mjs`. Validates extension API correctness across varied scenarios, not model decision-making.
+
 Environment used:
 - Repo branch: `live-drive/five-scenarios-2026-02-22`
 - Runtime class: `PiMemoryPhase3Extension`

@@ -97,6 +97,58 @@ describe('phase 3 - pi extension + tools', () => {
     expect(combined).not.toContain('raw ls output should not appear inline');
   });
 
+  it('wrappedFind indexes discovered paths as metadata-only XTDB file objects', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'pi-memory-phase3-'));
+    const ext = new PiMemoryPhase3Extension({ sessionId: `s-${Date.now()}-find`, workspaceRoot: root, systemPrompt: 'SYS' });
+    await ext.load();
+
+    await ext.wrappedFind('./alpha.ts\nsub/beta.md');
+
+    const alphaId = `file:${join(root, 'alpha.ts')}`;
+    const betaId = `file:${join(root, 'sub/beta.md')}`;
+    const snapshot = ext.getSnapshot();
+    const ids = snapshot.metadataPool.filter((m) => m.type === 'file').map((m) => m.id);
+    expect(ids).toContain(alphaId);
+    expect(ids).toContain(betaId);
+
+    const alpha = await ext.getXtEntity(alphaId);
+    expect(alpha?.content).toBeNull();
+    expect(alpha?.char_count).toBe(0);
+  });
+
+  it('wrappedGrep indexes file paths extracted from grep output', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'pi-memory-phase3-'));
+    const ext = new PiMemoryPhase3Extension({ sessionId: `s-${Date.now()}-grep`, workspaceRoot: root, systemPrompt: 'SYS' });
+    await ext.load();
+
+    await ext.wrappedGrep('src/main.ts:12:needle\ndocs/readme.md:1:needle');
+
+    const mainId = `file:${join(root, 'src/main.ts')}`;
+    const readmeId = `file:${join(root, 'docs/readme.md')}`;
+    const snapshot = ext.getSnapshot();
+    const ids = snapshot.metadataPool.filter((m) => m.type === 'file').map((m) => m.id);
+    expect(ids).toContain(mainId);
+    expect(ids).toContain(readmeId);
+
+    const readme = await ext.getXtEntity(readmeId);
+    expect(readme?.content).toBeNull();
+  });
+
+  it('observeToolExecutionEnd only indexes guessed paths for bash tool execution', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'pi-memory-phase3-'));
+    const ext = new PiMemoryPhase3Extension({ sessionId: `s-${Date.now()}-bash-observe`, workspaceRoot: root, systemPrompt: 'SYS' });
+    await ext.load();
+
+    await ext.observeToolExecutionEnd('python', 'cat ./ignored.txt');
+    let ids = ext.getSnapshot().metadataPool.filter((m) => m.type === 'file').map((m) => m.id).join('\n');
+    expect(ids).not.toContain('ignored.txt');
+
+    await ext.observeToolExecutionEnd('bash', 'cat ./seen.txt && ls src/index.ts --help');
+    ids = ext.getSnapshot().metadataPool.filter((m) => m.type === 'file').map((m) => m.id).join('\n');
+    expect(ids).toContain(`file:${join(root, 'seen.txt')}`);
+    expect(ids).toContain(`file:${join(root, 'src/index.ts')}`);
+  });
+
   it('assembled Message[] structure sanity', async () => {
     const ext = new PiMemoryPhase3Extension({ sessionId: `s-${Date.now()}-ctx`, systemPrompt: 'SYS' });
     await ext.load();

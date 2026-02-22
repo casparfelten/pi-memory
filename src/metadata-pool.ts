@@ -11,6 +11,10 @@ export class MetadataPool {
     this.entries.push(entry);
   }
 
+  clear(): void {
+    this.entries.length = 0;
+  }
+
   getAll(): MetadataEntry[] {
     return [...this.entries];
   }

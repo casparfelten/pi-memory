@@ -17,6 +17,14 @@ export class ActivePool {
     return Object.fromEntries(this.active.entries());
   }
 
+  clear(): void {
+    this.active.clear();
+  }
+
+  getIds(): string[] {
+    return [...this.active.keys()];
+  }
+
   renderAsTextBlocks(): Array<{ id: string; content: string }> {
     return [...this.active.entries()].map(([id, content]) => ({ id, content }));
   }

@@ -4,6 +4,7 @@ import { constants } from 'node:fs';
 import path from 'node:path';
 import { computeContentHash, computeMetadataViewHash, computeObjectHash } from './hashing.js';
 import { ContextManager } from './context-manager.js';
+import { FileWatcher } from './file-watcher.js';
 import type { FileObject, ToolcallObject } from './types.js';
 import { XtdbClient } from './xtdb-client.js';
 
@@ -48,6 +49,7 @@ function fileTypeFromPath(filePath: string): string {
 export class ExtensionRuntimeState {
   xtdb = new XtdbClient('http://127.0.0.1:3000');
   contextManager = new ContextManager(this.xtdb, 'default-session');
+  fileWatcher = new FileWatcher(this.xtdb);
   mockProcess: ChildProcess | null = null;
 
   async ensureXtdb(): Promise<void> {
@@ -118,6 +120,8 @@ export class ExtensionRuntimeState {
       fileObj.metadata_view_hash = computeMetadataViewHash(fileObj);
       fileObj.object_hash = computeObjectHash(fileObj);
       await this.xtdb.put(fileObj);
+      this.contextManager.noteIndexedObject(fileObj.id);
+      this.fileWatcher.watchFile(p);
       this.contextManager.getMetadataPool().add({
         id: fileObj.id,
         type: 'file',
@@ -130,6 +134,7 @@ export class ExtensionRuntimeState {
   }
 
   shutdown(): void {
+    this.fileWatcher.shutdown();
     this.mockProcess?.kill('SIGTERM');
     this.mockProcess = null;
   }

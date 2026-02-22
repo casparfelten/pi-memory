@@ -7,9 +7,11 @@ export default function piMemory(pi: ExtensionAPI): void {
 
   pi.on('session_start', async () => {
     await state.ensureXtdb();
+    await state.contextManager.loadSessionState('default-session');
   });
 
   pi.on('session_shutdown', async () => {
+    await state.contextManager.saveSessionState();
     state.shutdown();
   });
 

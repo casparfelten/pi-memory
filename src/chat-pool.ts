@@ -51,6 +51,16 @@ export class ChatPool {
     return this.turns.map((turn) => ({ ...turn, assistant: [...turn.assistant], toolcall_ids: [...turn.toolcall_ids] }));
   }
 
+  clear(): void {
+    this.turns.length = 0;
+    this.toolcalls.clear();
+  }
+
+  setTurns(turns: Turn[]): void {
+    this.turns.length = 0;
+    this.turns.push(...turns.map((turn) => ({ ...turn, assistant: [...turn.assistant], toolcall_ids: [...turn.toolcall_ids] })));
+  }
+
   renderAsMessages(): Message[] {
     const out: Message[] = [];
     for (const turn of this.turns) {

@@ -80,6 +80,7 @@ export interface SessionObject extends BaseObject {
   active_set: string[];
   inactive_set: string[];
   pinned_set: string[];
+  object_ids?: string[];
 }
 
 export type MemoryObject = FileObject | ToolcallObject | ChatObject | SessionObject;

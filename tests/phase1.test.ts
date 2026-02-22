@@ -1,11 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { execFileSync } from 'node:child_process';
+import { setTimeout as sleep } from 'node:timers/promises';
+import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
 import { XtdbClient } from '../src/xtdb-client.js';
 import { computeContentHash, computeMetadataViewHash, computeObjectHash } from '../src/hashing.js';
 import type { FileObject } from '../src/types.js';
 
 const client = new XtdbClient('http://127.0.0.1:3000');
 const root = new URL('..', import.meta.url).pathname;
+let mock: ChildProcess | null = null;
+let useMock = false;
 
 function buildFile(content: string): FileObject {
   const base: FileObject = {
@@ -29,11 +32,21 @@ function buildFile(content: string): FileObject {
 }
 
 describe('phase 1 - xtdb + hashing', () => {
-  beforeAll(() => {
-    execFileSync(`${root}scripts/xtdb-start.sh`, { stdio: 'inherit' });
+  beforeAll(async () => {
+    try {
+      execFileSync(`${root}scripts/xtdb-start.sh`, { stdio: 'inherit' });
+    } catch {
+      useMock = true;
+      mock = spawn('node', [`${root}scripts/mock-xtdb-server.mjs`], { stdio: 'ignore' });
+      await sleep(250);
+    }
   });
 
   afterAll(() => {
+    if (useMock) {
+      mock?.kill('SIGTERM');
+      return;
+    }
     execFileSync(`${root}scripts/xtdb-stop.sh`, { stdio: 'inherit' });
   });
 

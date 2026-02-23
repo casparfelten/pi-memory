@@ -1,14 +1,12 @@
 # Implementation Plan
 
-> What needs to change in the codebase to align with the SSOT (2026-02-23 revision).
-
-This document lists concrete implementation tasks. Each references the SSOT section it implements. Ordered by dependency — earlier items unblock later ones.
+> What needs to change in the codebase to align with the SSOT (2026-02-23 revision). Each section references the SSOT section it implements. Ordered by dependency — earlier items unblock later ones.
 
 ---
 
 ## 1) Types — `src/types.ts`
 
-**SSOT §2.2, §2.3, §2.5, §3.1**
+**Implements: SSOT §2.2, §2.3, §2.5, §3.1**
 
 The current types predate the object model. Rewrite to match the document structure defined in the SSOT.
 
@@ -23,11 +21,8 @@ interface FilesystemSource {
   path: string;
 }
 
-// Future source types will extend this union:
-// interface S3Source { type: 's3'; bucket: string; key: string; }
-// interface GitSource { type: 'git'; repo: string; ref: string; path: string; }
-
-type Source = FilesystemSource; // | S3Source | GitSource
+// Extensible: future source types join this union
+type Source = FilesystemSource;
 ```
 
 **Object envelope** (new — replaces ad-hoc fields):
@@ -43,12 +38,12 @@ interface ObjectEnvelope {
 
 **Object types** (update existing):
 
-- `FileObject`: add `source: FilesystemSource`, `source_hash: string`, `identity_hash: string`. Remove `id` as a user-set field — derive from identity hash. Keep `path`, `file_type`, `char_count` as mutable payload fields.
-- `ToolcallObject`: add `source: null`, `identity_hash: string`. Keep existing fields.
-- `ChatObject`: add `source: null`, `identity_hash: string`. Keep existing fields.
-- `SessionObject`: add `session_index: string[]` (append-only). Rename/clarify `inactive_set` → distinguish session index from metadata pool.
+- `FileObject`: gains `source: FilesystemSource`, `source_hash: string`, `identity_hash: string`. The `id` field is no longer caller-set — it is derived from the identity hash. The `path` field is removed from the mutable payload (it lives in `source.path`). Mutable fields: `content`, `file_type`, `char_count`, `content_hash`.
+- `ToolcallObject`: gains `source: null`, `identity_hash: string`. Otherwise unchanged.
+- `ChatObject`: gains `source: null`, `identity_hash: string`. Otherwise unchanged.
+- `SessionObject`: gains `session_index: string[]` (append-only). Existing `metadata_pool` becomes `string[]` of object IDs (compact — full metadata entries are looked up from the database, not duplicated in the session document). `active_set` and `pinned_set` remain as `string[]`.
 
-**Session wrapper** (update `SessionObject`):
+**Session wrapper** (updated shape):
 
 ```typescript
 interface SessionObject {
@@ -60,178 +55,212 @@ interface SessionObject {
   chat_ref: string;
   system_prompt_ref: string;
   session_index: string[];    // append-only: every object ID ever encountered
-  metadata_pool: string[];    // mutable: object IDs currently in metadata view
-  active_set: string[];       // mutable: object IDs with content loaded
+  metadata_pool: string[];    // mutable: object IDs currently visible as metadata
+  active_set: string[];       // mutable: object IDs with full content loaded
   pinned_set: string[];       // mutable: explicitly pinned object IDs
 }
 ```
 
-### Why
+### Decision: metadata pool storage
 
-Current types mix concerns. `FileObject.id` is set by the caller as `file:{path}` — identity is ad-hoc. The new structure makes identity derivation explicit and separates the immutable envelope from the mutable payload. Adding the session index as a distinct field from the metadata pool implements the append-only guarantee.
+The current code stores full `MetadataEntry` objects (with path, char_count, file_type, etc.) inside the session document. The new design stores only object IDs in the session document — the client looks up metadata from the object documents themselves. This avoids duplicating mutable fields in two places (the object and the session) and keeps the session document lean. The client caches metadata in memory during a session.
 
 ---
 
 ## 2) Hashing — `src/hashing.ts`
 
-**SSOT §2.2**
+**Implements: SSOT §2.2**
 
 Currently has three hash functions that mix concerns. Replace with three clearly separated hashes.
 
 ### What changes
 
-**`identityHash(type, source)`** — new. SHA-256 of the immutable envelope fields. For a filesystem file: `sha256(stableStringify({type: 'file', source: {type: 'filesystem', filesystemId: '...', path: '...'}}))`. Computed once at object creation. Used as the object ID for sourced objects.
+**`identityHash(type: string, source: Source | null): string`** — SHA-256 of the immutable envelope. For sourced objects: `sha256(stableStringify({type, source}))`. For unsourced: not used (ID is assigned, not derived). Computed once at object creation. Used as `xt/id` for sourced objects.
 
-**`sourceHash(rawBytes: Buffer)`** — new. SHA-256 of the raw external source bytes. For a file: hash of the file's contents as read from disk. This is NOT the same as `contentHash` — it hashes the raw source, not our document representation of it. Used for efficient change detection during indexing.
+**`sourceHash(rawBytes: Buffer): string`** — SHA-256 of the raw external source bytes. For a file: hash the file bytes as read from disk. This is distinct from `contentHash` — it hashes the external source, not our document fields. Used for efficient change detection: compare before uploading content.
 
-**`contentHash(mutablePayload: Record<string, unknown>)`** — updated. SHA-256 of all mutable payload fields via stable serialisation. Covers content, char_count, file_type, and any future fields. When we add fields, they're automatically included because we serialise the full mutable payload object.
+**`contentHash(mutablePayload: Record<string, unknown>): string`** — SHA-256 of all mutable payload fields via stable serialisation, excluding `source_hash` and `content_hash` itself. When we add new mutable fields, they are automatically included.
 
-**Remove:** `metadataViewHash` and `objectHash`. These served overlapping purposes that are now covered by the three distinct hashes.
+**Remove:** `metadataViewHash` (purpose absorbed by `contentHash`) and `objectHash` (purpose split between `identityHash` and `contentHash`). The existing `contentHash(content: string)` is replaced by the new `contentHash(payload)` that covers all mutable fields.
 
-### Why
+### Decision: sourceHash vs contentHash for files
 
-The existing `contentHash` only hashes the content string, not the metadata fields. The existing `objectHash` hashes almost everything but excludes some fields by name — brittle when fields are added. The existing `metadataViewHash` is a hand-picked subset. The new scheme has clean separation: identity (immutable), source (external), content (document-level). Each has one clear purpose.
+For file objects, `sourceHash` and a hash of the `content` field will usually be identical (both are SHA-256 of the file's text content). They serve different purposes: `sourceHash` is compared during indexing to avoid unnecessary writes; `contentHash` covers the full document payload (content + char_count + file_type + any future fields). They may diverge if we ever store a processed/transformed version in `content` rather than the raw file, or if type-specific fields change the content hash even when file bytes haven't changed.
 
 ---
 
-## 3) Filesystem identity
+## 3) Filesystem identity — new module
 
-**SSOT §4.4**
-
-New capability. The client needs to know what filesystem it's on.
+**Implements: SSOT §5.2, §5.4**
 
 ### What to build
 
-A function `getFilesystemId(): string` that returns a stable identifier for the current filesystem namespace.
+A module `src/filesystem.ts` (or similar) with:
 
-Default implementation: read `/etc/machine-id`, SHA-256 it. Falls back to hostname hash if machine-id is unavailable.
+**`getDefaultFilesystemId(): string`** — reads `/etc/machine-id` (or falls back to hostname), returns SHA-256. Called once at startup. Represents the primary filesystem namespace.
 
-This is called once at client startup and passed to the `SelfContextManager` constructor (or equivalent). All file source bindings use this filesystem ID.
+**`FilesystemResolver`** — a class or set of functions that resolves a file path to a filesystem ID.
 
-### Why
+```typescript
+interface MountMapping {
+  pathPrefix: string;       // e.g., "/workspace"
+  filesystemId: string;     // the filesystem ID for paths under this prefix
+}
 
-Currently file IDs are `file:{absolutePath}`, which assumes a single filesystem. Two agents in different sandboxes reading `/workspace/main.ts` would collide. With filesystem ID, they get different object IDs because different source bindings.
+class FilesystemResolver {
+  constructor(
+    private defaultFsId: string,
+    private mounts: MountMapping[] = [],
+  ) {}
 
----
+  resolve(absolutePath: string): string {
+    // Longest-prefix match against mounts
+    // Falls back to defaultFsId
+  }
+}
+```
 
-## 4) Extension — `src/phase3-extension.ts`
+Optionally, device-ID based detection: on the first `stat` of a file, check `stat().dev`. Cache a mapping from device ID to filesystem ID. If the device differs from the default filesystem's device, assign a new filesystem ID (or use a configured one). This catches bind mounts that weren't explicitly configured.
 
-**SSOT §2.4, §3.1, §4.5**
+### Decision: configuration vs auto-detection
 
-The main module. Multiple changes needed.
+Default to auto-detection via `stat().dev` for simplicity. The `stat` call is already happening (for the file watcher). Mount configuration is available as an override for cases where auto-detection doesn't produce the right answer (e.g., bind mounts that share a device ID with the host).
 
-### What changes
-
-**Constructor** — accept `filesystemId` (or compute it). Store it for use in all file source bindings.
-
-**File identity** — change from `file:{path}` to `identityHash('file', {type: 'filesystem', filesystemId, path})`. The identity hash becomes the object ID.
-
-**Session index** — add a `sessionIndex: Set<string>` alongside the existing `metadataPool`. When any object enters the metadata pool, also add its ID to the session index. The session index never has entries removed. Persist it in the session wrapper document.
-
-**Indexing flow** — implement the protocol from SSOT §4.5:
-1. Compute source binding from filesystem ID + absolute path.
-2. Compute source hash from raw file bytes.
-3. Derive object ID from identity hash.
-4. Check database: new → create; unchanged hash → skip; changed hash → new version.
-
-Currently the code always does `putAndWait` on every index operation. The source hash check eliminates unnecessary writes.
-
-**Document structure** — when creating/updating file objects, include the full envelope (type, source, identity_hash) and the three hashes (identity_hash, source_hash, content_hash).
-
-**Session persistence** — persist `session_index` array in the session wrapper document alongside metadata_pool, active_set, pinned_set.
-
-**Session resume** — load session_index from persisted state. Reconcile tracked files using source hash comparison (current code does mtime comparison — replace with hash-based).
-
-### Why
-
-This is where the design meets the existing code. The extension currently works but uses ad-hoc identity, doesn't separate session index from metadata pool, and re-uploads content on every index. These changes align it with the SSOT without changing the external API (activate, deactivate, pin, read, etc.).
+Constructor accepts optional mount mappings. If none provided, all detection is automatic.
 
 ---
 
-## 5) Context manager — `src/context-manager.ts`
+## 4) Database handler — new module
 
-**SSOT §5**
+**Implements: SSOT §5.5**
 
-Smaller changes. This module handles context assembly and the in-memory pools.
+### What to build
 
-### What changes
+A module `src/indexer.ts` (or method on the extension) that implements the indexing protocol:
 
-- Accept and manage file objects (currently toolcall-only in this module; files are handled separately in the extension).
-- Render the session index / metadata pool distinction in context assembly if needed (for now, the agent sees the metadata pool, not the full session index — this is fine).
-- No structural changes needed to the context assembly logic itself.
+```typescript
+interface IndexResult {
+  objectId: string;
+  action: 'created' | 'updated' | 'unchanged';
+}
 
-### Why
+async function indexSourcedObject(
+  xtdb: XtdbClient,
+  source: Source,
+  sourceHash: string,
+  content: string | null,
+  typeSpecificFields: Record<string, unknown>,
+): Promise<IndexResult>
+```
 
-The extension and the context manager have overlapping responsibilities for pool management. The context manager should be the single authority on context assembly; the extension should handle indexing and source tracking. This is a cleanup, not a redesign. Can be deferred if needed.
+Logic:
+1. Compute `objectId = identityHash(type, source)`.
+2. Fetch current version from XTDB by ID.
+3. If not found → create (full document with envelope + payload). Return `created`.
+4. If found, compare `sourceHash` against stored `source_hash`.
+5. If equal → return `unchanged`.
+6. If different → write new version (same envelope, updated payload). Return `updated`.
+
+### Why centralise this
+
+The indexing logic is currently scattered across three methods in the extension (`indexFileFromDisk`, `handleWatcherUpsert`, `reconcileKnownFilesAfterResume`). All three do variations of "read file, build document, write to XTDB." Centralising makes the protocol testable in isolation and ensures all paths go through the same check-then-write logic.
 
 ---
 
-## 6) Tests
+## 5) Extension — `src/phase3-extension.ts`
 
-**Existing tests will break** when types and hashing change. Update in the same commit.
+**Implements: SSOT §3, §5.1, §5.5, §5.6**
+
+The main module. Multiple changes, but the external API (activate, deactivate, pin, read, etc.) stays the same.
 
 ### What changes
 
-- `tests/phase1.test.ts` — update document construction to include source bindings and new hashes.
+**Constructor** — accept a `FilesystemResolver` (or at minimum a default filesystem ID). Accept optional mount mappings.
+
+**File identity** — replace `file:{path}` with `identityHash('file', {type: 'filesystem', filesystemId, path})`. Use the `FilesystemResolver` to determine filesystem ID for each path.
+
+**Session index** — add `sessionIndex: Set<string>`. Whenever an object enters the metadata pool or is otherwise encountered, add its ID to the session index. The session index is never modified except by addition. Persist as `session_index` in the session wrapper document.
+
+**Metadata pool** — change from `MetadataEntry[]` (with inline path/char_count/etc.) to `Set<string>` of object IDs. Metadata for rendering (path, char_count, file_type) is looked up from the in-memory object cache, which is populated on index/resume.
+
+**Indexing** — replace direct `putAndWait` calls with the database handler (§4). All file indexing goes through `indexSourcedObject`.
+
+**Session persistence** — persist `session_index` alongside `metadata_pool`, `active_set`, `pinned_set`.
+
+**Session resume** — load `session_index` from the persisted session document. For each tracked file in the session index, run the indexing protocol (source hash comparison). This replaces the current mtime-based reconciliation.
+
+**Watcher paths** — the watcher needs to watch actual file paths that the client can access. If the client runs on the host and the agent is sandboxed, the watcher watches host-side paths (for bind mounts) or needs access to the container filesystem (for container-internal files). This is determined by the `FilesystemResolver` and mount configuration.
+
+---
+
+## 6) Context manager — `src/context-manager.ts`
+
+**Implements: SSOT §4**
+
+Minor changes. Can be deferred.
+
+### What changes
+
+- Accept file objects in addition to tool calls (currently toolcall-only in this module; files are handled separately in the extension). The extension and context manager have overlapping pool management — longer term, the context manager should be the single authority on context assembly and the extension should handle indexing and tracking only.
+- No structural changes to context assembly logic. The rendering format (METADATA_POOL, ACTIVE_CONTENT blocks) is unchanged.
+
+### Decision: defer this
+
+The extension currently handles both indexing and context assembly for files. The context manager handles tool calls. Merging them is a cleanup, not a prerequisite. Defer until after the object model, hashing, filesystem identity, and indexing protocol are implemented and tested.
+
+---
+
+## 7) Tests
+
+**Existing tests will break** when types and hashing change. Update in the same commit as the code changes.
+
+### Updates to existing tests
+
+- `tests/phase1.test.ts` — update document construction to include source bindings and new hash fields.
 - `tests/phase2.test.ts` — minimal changes (context manager tests, mostly toolcall-focused).
-- `tests/phase3.test.ts` — update file read/index tests for new identity scheme and source hashing.
-- `tests/phase4.test.ts` — update watcher and session resume tests. Replace mtime-based checks with hash-based.
+- `tests/phase3.test.ts` — update file read/index tests for source-derived identity and source hashing.
+- `tests/phase4.test.ts` — update watcher and resume tests. Replace mtime-based reconciliation with hash-based.
 - `tests/e2e-final.test.ts` — update for new document structure.
 
-New tests:
-- Identity hash stability: same source → same ID, different filesystem → different ID.
-- Source hash comparison: unchanged file → no new version, changed file → new version.
-- Session index append-only: deactivated objects remain in session index.
+### New tests
+
+- **Identity hash stability:** same source → same object ID. Different filesystem ID → different object ID. Same path, different filesystem → different object.
+- **Source hash comparison:** unchanged file → no new version written. Changed file → new version. Verify with XTDB history query.
+- **Session index append-only:** deactivate an object → still in session index. Delete a file → still in session index (with null-content latest version).
+- **Filesystem resolver:** prefix matching returns correct filesystem IDs. Default fallback works.
+- **Indexer protocol:** new source → created. Unchanged → no-op. Changed → updated. Verify each case against real XTDB.
 
 ---
 
-## 7) Database handler
+## 8) Cleanup
 
-**SSOT §4.5**
+### Remove stale files
 
-Currently the XTDB client (`src/xtdb-client.ts`) is a thin HTTP wrapper. The indexing protocol (§4.5) needs a layer on top that handles the "check-then-write" logic.
+- `docs/spec/object-model-draft.md` — superseded by the SSOT. Preserved in git history.
 
-### What to build
+### Update references
 
-A database handler (could be a method on the extension, or a separate module) that implements the indexing protocol:
+- `docs/spec/README.md` — add reference to `implementation-plan.md`.
+- `AGENTS.md` — verify "XTDB dependency" section is still accurate after changes.
+- Experiment scripts in `scripts/` — will need updates to use the new constructor API (filesystem ID). Can be done after core implementation.
+
+---
+
+## Summary: dependency order
 
 ```
-index(source: Source, sourceHash: string, content: string, metadata: {...})
-  → { objectId: string, action: 'created' | 'updated' | 'unchanged' }
+1. types.ts          (no deps — pure type definitions)
+2. hashing.ts        (depends on types)
+3. filesystem.ts     (no deps — utility module)
+4. indexer.ts         (depends on types, hashing, xtdb-client)
+5. phase3-extension   (depends on all above)
+6. tests              (updated alongside each module)
+7. context-manager    (deferred — cleanup)
+8. cleanup            (after everything works)
 ```
 
-This encapsulates:
-1. Derive object ID from source.
-2. Fetch current version from XTDB.
-3. Compare source hash.
-4. Write new version if changed.
-5. Return object ID and what happened.
-
-The XTDB client itself stays unchanged — it's a transport layer.
-
-### Why
-
-The indexing logic is currently scattered across `indexFileFromDisk`, `handleWatcherUpsert`, and `reconcileKnownFilesAfterResume` in the extension. All three do variations of "read file, build document, put to XTDB." Centralising this in a handler eliminates duplication and makes the indexing protocol testable in isolation.
-
 ---
 
-## Summary of changes by file
+## Migration
 
-| File | Change scope |
-|------|-------------|
-| `src/types.ts` | Rewrite: source bindings, object envelope, session wrapper |
-| `src/hashing.ts` | Rewrite: three clean hashes, remove legacy functions |
-| `src/phase3-extension.ts` | Major update: filesystem ID, identity scheme, session index, indexing protocol |
-| `src/context-manager.ts` | Minor update: accept file objects (can defer) |
-| `src/xtdb-client.ts` | No changes |
-| `src/index.ts` | Update exports if public API changes |
-| `tests/*` | Update all suites for new types/hashing. Add new identity and indexing tests. |
-| New: database handler | Indexing protocol implementation |
-| New: filesystem ID utility | `getFilesystemId()` function |
-
----
-
-## Migration notes
-
-- Existing XTDB data uses the old document structure (no source bindings, old hash fields). A migration isn't strictly necessary for development — the test database can be wiped (it's experiment data). For any persistent data that matters, a migration script would read old documents and rewrite them with the new structure.
-- The experiment scripts in `scripts/` will need updates to use the new API (filesystem ID in constructor, new document shapes).
+Existing XTDB data uses the old document structure. The test/experiment database can be wiped — it's experiment data, not production. For any persistent data that matters, a migration script would read old documents and rewrite them with the new envelope + payload structure. Not needed for development.

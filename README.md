@@ -1,25 +1,31 @@
 # Self Context Manager
 
-A **context manager layer** for LLM agents: controls what is kept, retrieved, merged, and surfaced in the active context window over time.
-
-While memory is one capability, the broader goal is reliable **context logistics** across long-running agent work.
-
-Built as a [Pi coding agent](https://github.com/badlogic/pi-mono) extension.
-
-**Canonical spec (SSOT):** [Context Manager SSOT](docs/spec/context-manager-ssot.md)
+Context management layer for LLM agents. Controls what is kept, retrieved, and surfaced in the active context window over time. Built as a [Pi coding agent](https://github.com/badlogic/pi-mono) extension.
 
 ## Status
 
-Under construction.
+Working prototype. API validated against real XTDB. LLM-driven experiments show prompt policy meaningfully changes context management behaviour. See [experiments](docs/experiments/) for details.
 
-## Docs
+## Structure
 
-- [Context Manager SSOT (authoritative)](docs/spec/context-manager-ssot.md)
-- [Build plan](PLAN.md)
-- [Testing next steps](docs/testing-next-steps.md)
-- [Spec: memory system v0](docs/spec/memory-system-v0.md)
-- [Spec: v0 fixes & clarifications](docs/spec/memory-system-v0-fixes.md)
-- [Spec: handoff & reading list](docs/spec/memory-system-handoff.md)
+```
+src/                        # TypeScript source
+tests/                      # Unit + integration tests (vitest)
+scripts/                    # Experiment scripts + XTDB start/stop
+docs/
+  spec/                     # Design spec (SSOT is authoritative)
+  experiments/              # Experiment reports, data, methodology
+  build-notes/              # Build plan, decision log, phase notes
+  eval-plan.md              # Evaluation roadmap (ablations, holdout tasks)
+xtdb/                       # XTDB config (jar/logs/pid gitignored)
+tmp/                        # Experiment run outputs (gitignored)
+```
+
+## Spec
+
+**Authoritative:** [Context Manager SSOT](docs/spec/context-manager-ssot.md)
+
+Historical design docs in `docs/spec/` — see its README for which is current.
 
 ## License
 

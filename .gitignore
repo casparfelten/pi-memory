@@ -5,3 +5,9 @@ xtdb/*.jar
 xtdb/*.log
 xtdb/*.pid
 *.tsbuildinfo
+
+# NPM cache
+.npm/
+
+# Transient experiment runs — copy valuable outputs to docs/experiments/outputs/ before deleting
+tmp/

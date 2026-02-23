@@ -1,0 +1,1 @@
+Hypothesis B: duplicate-key retries amplified lag.\n

@@ -1,0 +1,1 @@
+Checkout stayed near baseline; reconciliation degraded sharply.\n

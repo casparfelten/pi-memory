@@ -1,0 +1,1 @@
+Hypothesis A: join-key gaps from partner B partial refunds.\n

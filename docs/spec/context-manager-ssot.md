@@ -339,35 +339,50 @@ The **client** is the context manager process — instantiated by the harness, r
 
 **Agent sees:** activate, deactivate, pin, unpin tools plus standard file/tool operations. Database is invisible.
 
-### 5.2 Filesystem awareness
+### 5.2 Filesystem awareness and mount detection
 
-| Scenario | Filesystem IDs | Path translation |
-|----------|---------------|-----------------|
-| No sandbox | One (host) | None |
-| Sandbox with bind mounts | Host + container overlay | Agent prefix → canonical prefix |
-| Multiple mounts | One per distinct mount + default | Per-mount prefix rules |
+The client needs to know which paths inside the sandbox are bind-mounted from the host (shared files — same object as host) vs container-internal (overlay filesystem — isolated, ephemeral).
+
+#### Detection mechanisms
+
+**Primary: `docker inspect` from the harness.** The harness created the container and has the container ID. `docker inspect {id}` returns the Mounts array — each entry has `Source` (host path), `Destination` (container path), `Type` (`bind`), and `RW`. This directly produces the mount mapping table. No parsing, no guessing.
+
+Example from a real sandbox:
+```json
+{"Source": "/home/abaris/.openclaw/workspaces/dev", "Destination": "/workspace", "Type": "bind", "RW": true}
+```
+→ mount mapping: `agentPrefix=/workspace`, `canonicalPrefix=/home/abaris/.openclaw/workspaces/dev`, `filesystemId=<host FS ID>`.
+
+**Fallback: `/proc/self/mountinfo` from inside the sandbox.** If docker inspect isn't available, the client execs `cat /proc/self/mountinfo` inside the sandbox. Bind mounts appear as lines with the host device (e.g., `252:3`). Field 4 is the host path, field 5 is the container mount point. Same information, parsed from inside.
+
+**Runtime verification: `stat().dev` inside the sandbox.** Bind-mounted paths have the host device ID (e.g., `64515`). Container overlay paths have a different device ID (e.g., `48`). The client can stat any path to confirm whether it's on a bind mount or container-internal. This catches paths not under any known mount prefix. One stat call per new device encountered, cached.
+
+#### How it works in practice
+
+At client startup:
+1. Harness calls `docker inspect` → gets mount table.
+2. Client builds mount mappings from each bind mount entry.
+3. Host filesystem ID computed from host `/etc/machine-id` (SHA-256).
+4. Container overlay filesystem ID computed from container's `/etc/machine-id` or container ID.
+5. Default filesystem ID = container overlay (paths not under any mount are container-internal).
+
+At indexing time:
+1. Agent accesses a path (e.g., `/workspace/src/main.ts`).
+2. Client does longest-prefix match against mount mappings.
+3. Match (`/workspace` → `/home/abaris/.openclaw/workspaces/dev`): translate prefix, use host FS ID. Source binding gets the canonical host path. Watcher watches this path (client can access it — it's on the host).
+4. No match: path is container-internal. Use container overlay FS ID. Source binding uses the agent path as-is. No watcher (ephemeral, not externally modified).
+
+For the no-sandbox case: no mount mappings. One filesystem ID (host). All paths are canonical. Everything is watchable.
 
 ### 5.3 Path translation
 
-**Mount mappings** translate agent-visible ↔ canonical paths:
+**Forward** (agent → canonical): longest-prefix match against mount mappings. Match → replace agent prefix with canonical prefix, use mapping's FS ID. No match → path as-is, default (overlay) FS ID.
 
-```
-agentPrefix:     /workspace
-canonicalPrefix: /home/abaris/project
-filesystemId:    <host filesystem ID>
-```
-
-**Forward** (agent → canonical): longest-prefix match. Match → replace prefix, use mapping's FS ID. No match → path as-is, default FS ID.
-
-**Reverse** (canonical → display): replace canonical prefix with agent prefix. No match → show canonical path as fallback.
-
-**Source:** harness configures at startup from Docker/sandbox config.
-
-**Fallback:** optional `stat().dev` device-ID detection for unconfigured mounts. Zero extra I/O (stat already happening). Mount mappings take precedence.
+**Reverse** (canonical → display): replace canonical prefix with agent prefix. No match → show canonical path. Used for metadata rendering (§4.1).
 
 ### 5.4 Filesystem identity
 
-SHA-256 of `/etc/machine-id` (or platform equivalent) for host. Container has its own. Bind mounts use host's FS ID (same files). Database trusts declared IDs.
+Host: SHA-256 of `/etc/machine-id`. Container overlay: SHA-256 of container ID or container's own `/etc/machine-id`. Bind mounts use the host's FS ID (edits propagate both ways — same filesystem). Database trusts declared IDs.
 
 ### 5.5 Sources
 
@@ -414,7 +429,7 @@ Two entry points. Both produce the same object identity.
 
 ### 5.8 Trackers
 
-File watchers run by the client. Watch canonical (host-side) paths for bind-mounted files. No watcher for container-internal files (indexed via tool calls only — ephemeral, not externally modified).
+File watchers run by the client. For bind-mounted files, the client watches the canonical host-side path (it has direct access — the file is on the host filesystem). For container-internal files (overlay), no watcher — these are ephemeral and only indexed when the agent accesses them via tool calls.
 
 Multiple clients can watch the same source. All resolve to the same object.
 

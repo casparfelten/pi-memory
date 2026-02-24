@@ -156,38 +156,53 @@ The field list is explicit per type. No dynamic exclusion — each type declares
 
 ```typescript
 interface MountMapping {
-  agentPrefix: string;
-  canonicalPrefix: string;
-  filesystemId: string;
+  agentPrefix: string;      // e.g., "/workspace"
+  canonicalPrefix: string;  // e.g., "/home/abaris/.openclaw/workspaces/dev"
+  filesystemId: string;     // host FS ID
+  writable: boolean;        // from docker inspect RW field
 }
 
 interface ResolvedPath {
   filesystemId: string;
   canonicalPath: string;
+  isMounted: boolean;       // true = bind mount, false = container-internal
 }
 
 class FilesystemResolver {
   constructor(
-    private defaultFsId: string,
-    private mounts: MountMapping[] = [],  // sorted by prefix length desc
+    private defaultFsId: string,    // container overlay FS ID
+    private hostFsId: string,       // host FS ID
+    private mounts: MountMapping[],  // sorted by prefix length desc
   ) {}
 
   resolve(agentPath: string): ResolvedPath { /* longest prefix match */ }
-
-  reverseResolve(canonicalPath: string, filesystemId: string): string {
-    // canonical → agent-visible. Fallback: return canonical.
-  }
-
-  isWatchable(agentPath: string): boolean {
-    // true if resolved via mount mapping (host path accessible)
-    // false if default FS ID (container-internal)
-  }
+  reverseResolve(canonicalPath: string): string { /* canonical → agent-visible */ }
+  isWatchable(agentPath: string): boolean { /* true if mounted (host-accessible) */ }
 }
 
-async function getDefaultFilesystemId(): Promise<string> {
-  // SHA-256 of /etc/machine-id, fallback hostname
+// Build resolver from docker inspect output
+async function buildResolver(containerId: string): Promise<FilesystemResolver> {
+  // 1. docker inspect {containerId} → parse Mounts array
+  // 2. For each bind mount: { agentPrefix: Destination, canonicalPrefix: Source, ... }
+  // 3. Host FS ID from host /etc/machine-id
+  // 4. Container FS ID from container /etc/machine-id or containerId hash
+  // 5. Return new FilesystemResolver(containerFsId, hostFsId, mounts)
+}
+
+// Fallback: build from /proc/self/mountinfo inside sandbox
+async function buildResolverFromMountinfo(execInSandbox: (cmd: string) => Promise<string>): Promise<FilesystemResolver> {
+  // 1. exec 'cat /proc/self/mountinfo' → parse bind mount lines
+  // 2. Identify host device from mount entries
+  // 3. Build mount mappings from field 4 (host path) + field 5 (container path)
+}
+
+// No-sandbox case
+function buildPassthroughResolver(): FilesystemResolver {
+  // Single FS ID, no mounts, resolve() returns path unchanged
 }
 ```
+
+Three construction paths: docker inspect (primary), mountinfo parsing (fallback), passthrough (no sandbox). The resolver itself is the same regardless of how it was built.
 
 ---
 

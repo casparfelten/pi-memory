@@ -1,53 +1,33 @@
 # Self Context Manager
 
-Context management layer for LLM agents. Controls what is kept, retrieved, and surfaced in the active context window over time. Built as a [Pi coding agent](https://github.com/badlogic/pi-mono) extension.
+Context management layer for LLM agents. Controls what is kept, retrieved, and surfaced in the active context window over time.
 
-## Status (as of 2026-02-23)
+## Status
 
-Working prototype. Four build phases completed with real XTDB (no mocks), 25/25 tests passing. LLM-driven experiments (GPT-4.1) show prompt policy meaningfully changes context management behaviour — baseline agents never deactivate context; with hygiene prompts they do, and with the right task shape they also recall earlier evidence. All experiments used investigation/research scenarios; not yet tested on a real coding task.
+- XTDB prototype is archived under `archive/xtdb-prototype/`.
+- Active storage/tracking work is specified in canonical v1 docs (design contract stage; implementation pending).
 
-## Where to start
+## Canonical docs
 
-**If you're trying to understand what this is:** Read [the SSOT](docs/spec/context-manager-ssot.md) sections 1-2 (problem, goals, design decisions).
+- `docs/storage-tracking-spec-v1.md` — **Intent spec** (authoritative behavior/invariants)
+- `docs/database-spec-sqlite-v1.md` — **Implementation spec** (SQLite schema + `StoragePort` realization)
+- `docs/eval-plan.md` — evaluation roadmap
+- `docs/README.md` — docs index + authority map
 
-**If you're trying to understand what's built:** Read [the SSOT](docs/spec/context-manager-ssot.md) section 3 (implementation status), then look at `src/`.
-
-**If you're trying to understand the experiments:** Read [docs/experiments/README.md](docs/experiments/README.md) — it separates LLM-driven experiments from scripted API validation and summarises key findings.
-
-**If you're trying to build or extend:** Read [docs/build-notes/plan.md](docs/build-notes/plan.md) for the original build plan and phase structure, then [docs/build-notes/rebuild-final-report.md](docs/build-notes/rebuild-final-report.md) for what was actually built and how to rerun it.
-
-**If you're trying to run it:**
-```bash
-# Start XTDB
-./scripts/xtdb-start.sh
-
-# Build
-npm run build
-
-# Run tests (25/25 expected)
-npm test
-```
-
-## Structure
+## Active source layout
 
 ```
-src/                        # TypeScript source (6 modules)
-tests/                      # Unit + integration tests (vitest, 5 suites, 25 tests)
-scripts/                    # Experiment scripts + XTDB start/stop
-fixtures/                   # Seed data for experiments (investigation scenarios)
-docs/
-  spec/                     # Design spec (SSOT is authoritative)
-  experiments/              # Reports, outputs, data, methodology
-  build-notes/              # Build plan, decision log, phase notes
-  eval-plan.md              # Evaluation roadmap (ablations, holdout tasks)
-xtdb/                       # XTDB config (jar/logs/pid gitignored)
+src/                        # Active TypeScript source (core context manager)
+tests/                      # Active tests (vitest)
+docs/                       # Canonical specs + docs index
+  archive/                  # Historical snapshots (non-normative)
+archive/
+  xtdb-prototype/           # Archived XTDB implementation + docs + tests + scripts
 ```
 
-## Spec
+## Archive
 
-**Authoritative:** [Context Manager SSOT](docs/spec/context-manager-ssot.md). If anything else conflicts, the SSOT wins.
-
-Historical design docs in `docs/spec/` — see [its README](docs/spec/README.md) for which is current.
+See `archive/xtdb-prototype/README.md` for what was moved and why.
 
 ## License
 

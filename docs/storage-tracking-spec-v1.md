@@ -11,7 +11,7 @@ This document is the canonical behavioral contract for storage/tracking.
 
 Authority rules:
 1. This document defines behavior, invariants, and conflict semantics.
-2. `docs/database-spec-sqlite-v1.md` is the single SQLite implementation SSOT.
+2. `docs/implementation-ssot-v1.md` is the single implementation SSOT.
 3. If intent vs implementation wording conflicts, this document wins; implementation docs must be updated.
 
 ---
@@ -246,6 +246,6 @@ These are cut from core scope, not deferred-internals pretending to be active.
 ## 11) Cross-doc canonical map
 
 - Canonical intent (this doc): `docs/storage-tracking-spec-v1.md`
-- Canonical SQLite realization: `docs/database-spec-sqlite-v1.md`
+- Canonical implementation SSOT: `docs/implementation-ssot-v1.md`
 - Evaluation roadmap: `docs/eval-plan.md`
 - Historical/non-normative docs: `docs/archive/` and `archive/xtdb-prototype/`

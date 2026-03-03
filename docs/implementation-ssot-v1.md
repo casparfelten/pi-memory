@@ -1,4 +1,4 @@
-# Database Spec — SQLite v1 (Implementation SSOT)
+# Implementation SSOT v1 — Storage (SQLite) + Context Loading Boundary
 
 Status: **Canonical implementation SSOT (design; not implemented)**
 Date: 2026-03-03
@@ -7,17 +7,17 @@ Behavioral authority:
 - `docs/storage-tracking-spec-v1.md` (intent semantics)
 
 Implementation-authority rule:
-- This is the **single** canonical implementation spec for SQLite v1.
+- This is the **single** canonical implementation SSOT for v1.
 - Other docs may discuss implementation history/background but are non-authoritative.
 
 ---
 
 ## 0) Scope
 
-Defines SQLite realization for v1 intent:
-1. physical tables/indexes,
-2. transactional write/read behavior,
-3. `StoragePort` boundary.
+This implementation SSOT defines two implementation surfaces and their boundary:
+1. **Storage implementation (SQLite)** — physical tables/indexes and transactional write/read behavior.
+2. **Context loading implementation** — how runtime context assembly reads from storage.
+3. **Query interface boundary** between storage and context-loading layers.
 
 This doc does **not** introduce policy beyond intent spec.
 
@@ -381,7 +381,40 @@ export interface StoragePort {
 
 ---
 
-## 10) Out-of-scope for this implementation profile
+## 10) Context loading boundary (separate from DB internals)
+
+The runtime context loader is a separate layer that reads via query interfaces and does not depend on raw table internals.
+
+### 10.1 Query interface contract (storage -> context loader)
+
+Context loader depends only on these read capabilities:
+1. `getLatest(objectId)`
+2. `getHistory(objectId, order)`
+3. `queryReferences(...)`
+4. `getReferrersByTargetVersion(...)`
+5. `getReferrersByTargetHash(...)`
+
+No loader logic may issue direct SQL against implementation tables.
+
+### 10.2 Context loader responsibilities (implementation layer)
+
+Context loader composes LLM-facing context from storage reads:
+1. Resolve session object HEAD via `session_id` linkage.
+2. Load referenced content objects (active/pinned/inactive sets) by explicit refs.
+3. Materialize metadata-first context ordering and selective active content inclusion.
+4. Preserve deterministic ordering for cache stability.
+
+### 10.3 Storage responsibilities (implementation layer)
+
+Storage implementation guarantees:
+1. immutable, ordered version history,
+2. conflict-safe write semantics,
+3. deterministic ref extraction and reverse lookup,
+4. canonical typed-envelope permanence.
+
+---
+
+## 11) Out-of-scope for this implementation profile
 
 Not part of this canonical v1 profile:
 - `doc_nodes` and any structural tree rebuild APIs,
@@ -391,7 +424,7 @@ Not part of this canonical v1 profile:
 
 ---
 
-## 11) Cross-doc references
+## 12) Cross-doc references
 
 - Intent authority: `docs/storage-tracking-spec-v1.md`
 - Evaluation plan: `docs/eval-plan.md`

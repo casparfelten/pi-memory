@@ -3,12 +3,12 @@
 ## Canonical active docs
 
 1. `storage-tracking-spec-v1.md` — **Intent SSOT** (authoritative behavior/invariants)
-2. `database-spec-sqlite-v1.md` — **Implementation SSOT** (single SQLite schema + `StoragePort` realization source)
+2. `implementation-ssot-v1.md` — **Implementation SSOT** (single canonical implementation source: SQLite storage + context-loading query boundary)
 3. `eval-plan.md` — evaluation roadmap
 
 Authority precedence:
 - Intent (`storage-tracking-spec-v1.md`) is canonical for subsystem semantics.
-- Implementation (`database-spec-sqlite-v1.md`) is the single canonical SQLite implementation spec and must conform to intent.
+- Implementation (`implementation-ssot-v1.md`) is the single canonical implementation SSOT and must conform to intent.
 
 ## Canonical profile summary (v1)
 

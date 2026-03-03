@@ -1,10 +1,14 @@
-# Database Spec — SQLite v1 (Implementation Spec)
+# Database Spec — SQLite v1 (Implementation SSOT)
 
-Status: **Canonical implementation spec (design; not implemented)**
+Status: **Canonical implementation SSOT (design; not implemented)**
 Date: 2026-03-03
 
 Behavioral authority:
 - `docs/storage-tracking-spec-v1.md` (intent semantics)
+
+Implementation-authority rule:
+- This is the **single** canonical implementation spec for SQLite v1.
+- Other docs may discuss implementation history/background but are non-authoritative.
 
 ---
 

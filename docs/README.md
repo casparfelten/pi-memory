@@ -2,13 +2,13 @@
 
 ## Canonical active docs
 
-1. `storage-tracking-spec-v1.md` — **Intent spec** (authoritative behavior/invariants)
-2. `database-spec-sqlite-v1.md` — **Implementation spec** (SQLite schema + `StoragePort` realization)
+1. `storage-tracking-spec-v1.md` — **Intent SSOT** (authoritative behavior/invariants)
+2. `database-spec-sqlite-v1.md` — **Implementation SSOT** (single SQLite schema + `StoragePort` realization source)
 3. `eval-plan.md` — evaluation roadmap
 
 Authority precedence:
 - Intent (`storage-tracking-spec-v1.md`) is canonical for subsystem semantics.
-- Implementation (`database-spec-sqlite-v1.md`) must conform to intent.
+- Implementation (`database-spec-sqlite-v1.md`) is the single canonical SQLite implementation spec and must conform to intent.
 
 ## Canonical profile summary (v1)
 
@@ -24,16 +24,11 @@ Explicitly out of scope in this profile:
 - field-hash pinning
 - built-in FTS and GC APIs
 
-## Process docs (active, non-behavioral)
-
-- `docs/process/` — workflow/process templates for agents and doc maintenance.
-- These are not canonical runtime/storage behavior specs.
-
 ## Historical/non-normative docs
 
-- `docs/archive/` — historical snapshots and working dumps (non-normative)
-- `docs/archive/write-down/` — dated checkpoint notes
-- XTDB-era archives:
-  - `archive/xtdb-prototype/docs-spec/`
-  - `archive/xtdb-prototype/docs-build-notes/`
-  - `archive/xtdb-prototype/docs-experiments/`
+- `docs/archive/` — historical snapshots moved out of canonical path.
+  - `docs/archive/spec-legacy/` — prior SSOT/implementation docs (superseded).
+  - `docs/archive/build-notes-legacy/` — rebuild notes and historical execution logs.
+- `docs/experiments/` — experimental methodology, data, and reports (non-authoritative for runtime contracts).
+- XTDB prototype archive:
+  - `archive/xtdb-prototype/`

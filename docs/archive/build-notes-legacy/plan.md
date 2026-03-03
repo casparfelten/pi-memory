@@ -1,10 +1,14 @@
-# self-context-manager — Build Plan
+# self-context-manager — Build Plan (Legacy Archive)
+
+⚠️ Archived historical plan. Not authoritative for current storage specs.
 
 ## What this is
 
-A context management layer that slots into Pi coding agent as an extension. It gives the LLM agent object-level control over its context window. Everything (files, toolcall outputs, chat turns) becomes a versioned object in XTDB. The agent works with references and metadata, not repeated full-text dumps.
+A historical context management build plan from the XTDB-era design period.
 
-**Canonical spec:** `docs/spec/memory-system-v0.md`, `docs/spec/memory-system-v0-fixes.md`, `docs/spec/memory-system-handoff.md`. Read these first. They are the source of truth.
+Superseded canonical docs:
+- Intent SSOT: `docs/storage-tracking-spec-v1.md`
+- Implementation SSOT: `docs/database-spec-sqlite-v1.md`
 
 ## Architecture overview
 

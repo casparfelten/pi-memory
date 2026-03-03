@@ -11,7 +11,7 @@ This document is the canonical behavioral contract for storage/tracking.
 
 Authority rules:
 1. This document defines behavior, invariants, and conflict semantics.
-2. `docs/database-spec-sqlite-v1.md` defines SQLite realization details.
+2. `docs/database-spec-sqlite-v1.md` is the single SQLite implementation SSOT.
 3. If intent vs implementation wording conflicts, this document wins; implementation docs must be updated.
 
 ---

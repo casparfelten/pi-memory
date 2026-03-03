@@ -9,8 +9,8 @@ Context management layer for LLM agents. Controls what is kept, retrieved, and s
 
 ## Canonical docs
 
-- `docs/storage-tracking-spec-v1.md` — **Intent spec** (authoritative behavior/invariants)
-- `docs/database-spec-sqlite-v1.md` — **Implementation spec** (SQLite schema + `StoragePort` realization)
+- `docs/storage-tracking-spec-v1.md` — **Intent SSOT** (authoritative behavior/invariants)
+- `docs/database-spec-sqlite-v1.md` — **Implementation SSOT** (single SQLite schema + `StoragePort` realization source)
 - `docs/eval-plan.md` — evaluation roadmap
 - `docs/README.md` — docs index + authority map
 

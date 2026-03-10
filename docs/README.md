@@ -34,6 +34,8 @@ Explicitly out of scope in this profile:
 
 Note: historical docs may reference removed legacy backend artifacts; those references are archival context only.
 
+Legacy adapter/fallback-adapter wording (including UI/harness adapter discussions in archived specs and notes) is historical and non-normative.
+
 - `docs/archive/` — historical snapshots moved out of canonical path.
   - `docs/archive/spec-legacy/` — prior SSOT/implementation docs (superseded).
   - `docs/archive/build-notes-legacy/` — rebuild notes and historical execution logs.

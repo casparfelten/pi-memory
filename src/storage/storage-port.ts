@@ -17,6 +17,7 @@ export interface VersionWriteInput {
   fileBytes?: Uint8Array | null;
 
   path?: string | null;
+  // required and non-empty when objectType='session'
   sessionId?: string | null;
   toolName?: string | null;
   status?: string | null;
@@ -75,6 +76,7 @@ export interface ReferenceRecord {
 export interface StoragePort {
   putVersion(input: VersionWriteInput): Promise<
     | { ok: true; record: VersionRecord; idempotentReplay: boolean }
+    | { ok: false; validation: true; reason: 'invalid_session_id' }
     | { ok: false; conflict: true; reason: 'version_conflict' | 'idempotency_mismatch' }
   >;
 

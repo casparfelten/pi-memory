@@ -13,3 +13,5 @@ Rules:
 Contents:
 - `spec-legacy/` — superseded legacy spec/SSOT files.
 - `build-notes-legacy/` — historical rebuild notes and reports.
+- `session-notes/` — archived in-progress notes, handoff prompts, and checkpoint summaries.
+- `write-down/` — dated checkpoint notes captured during implementation sessions.

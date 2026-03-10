@@ -10,6 +10,12 @@ Authority precedence:
 - Intent (`intent-ssot-v1.md`) is canonical for subsystem semantics.
 - DB and Agentic implementation SSOTs must conform to intent.
 
+## Implementation status snapshot (as of 2026-03-10)
+
+- Active runtime/storage path is implemented in `src/phase3-extension.ts` + `src/storage/*`.
+- DB SSOT conformance coverage: `tests/storage/` (`tests/storage/SSOT_DB_TEST_MAP.md`).
+- Agentic SSOT conformance coverage: `tests/agentic/` (`tests/agentic/SSOT_AGENTIC_TEST_MAP.md`).
+
 ## Canonical profile summary (v1)
 
 - Minimal immutable version store with idempotent writes
@@ -32,4 +38,7 @@ Note: historical docs may reference removed legacy backend artifacts; those refe
   - `docs/archive/spec-legacy/` — prior SSOT/implementation docs (superseded).
   - `docs/archive/build-notes-legacy/` — rebuild notes and historical execution logs.
   - `docs/archive/experiments-legacy/` — experimental methodology, data, and reports.
+  - `docs/archive/session-notes/` — archived working/session notes and handoff prompts (non-normative).
+  - `docs/archive/write-down/` — dated checkpoint write-down notes (non-normative).
   - `docs/archive/eval-plan-legacy.md` — evaluation roadmap (historical).
+- `docs/temp/` — working notes in progress only; archive to `docs/archive/` at checkpoints/handoff.

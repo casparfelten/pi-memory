@@ -15,6 +15,7 @@ type SqlArg = string | number | Uint8Array | null;
 
 type PutResult =
   | { ok: true; record: VersionRecord; idempotentReplay: boolean }
+  | { ok: false; validation: true; reason: 'invalid_session_id' }
   | { ok: false; conflict: true; reason: 'version_conflict' | 'idempotency_mismatch' };
 
 type ObjectRow = { object_type: ObjectType; current_version_id: string | null };
@@ -109,17 +110,22 @@ export class SqliteStorage implements StoragePort {
   }
 
   async putVersion(input: VersionWriteInput): Promise<PutResult> {
-    const normalized = normalizePutInput(input);
-    const refs = extractRefs(input.objectType, input.contentStruct);
-    const refsHash = hashRefs(refs);
+    if (isInvalidSessionIdentity(input)) {
+      return { ok: false, validation: true, reason: 'invalid_session_id' };
+    }
+
+    ensureString(input.requestId, 'requestId', true);
+    ensureString(input.objectId, 'objectId', true);
+    const txTime = input.txTime ?? new Date().toISOString();
 
     return this.tx(() => {
       const idem = this.stmt(SQL.idempotencyByRequest).get(input.requestId) as IdemRow | undefined;
       if (idem) {
+        const fingerprint = computeIdempotencyFingerprint(input);
         const matches =
           idem.object_id === input.objectId &&
-          idem.content_struct_hash === normalized.contentStructHash &&
-          (idem.file_bytes_hash ?? null) === normalized.fileBytesHash;
+          idem.content_struct_hash === fingerprint.contentStructHash &&
+          (idem.file_bytes_hash ?? null) === fingerprint.fileBytesHash;
 
         if (!matches) return { ok: false, conflict: true, reason: 'idempotency_mismatch' } as const;
 
@@ -128,7 +134,7 @@ export class SqliteStorage implements StoragePort {
         return { ok: true, record: replay, idempotentReplay: true } as const;
       }
 
-      this.stmt(SQL.insertObjectIfMissing).run(input.objectId, input.objectType, normalized.txTime, normalized.txTime);
+      this.stmt(SQL.insertObjectIfMissing).run(input.objectId, input.objectType, txTime, txTime);
 
       const objectRow = this.stmt(SQL.objectById).get(input.objectId) as ObjectRow | undefined;
       if (!objectRow) throw new Error(`missing_object_row:${input.objectId}`);
@@ -142,7 +148,14 @@ export class SqliteStorage implements StoragePort {
         return { ok: false, conflict: true, reason: 'version_conflict' } as const;
       }
 
-      const versionNo = Number((this.stmt(SQL.nextVersionNo).get(input.objectId) as { next_version_no: number }).next_version_no);
+      const versionNo = Number(
+        (this.stmt(SQL.nextVersionNo).get(input.objectId) as { next_version_no: number }).next_version_no,
+      );
+
+      const normalized = normalizePutInput(input, txTime);
+      const refs = extractRefs(input.objectType, input.contentStruct);
+      const refsHash = hashRefs(refs);
+
       const versionId = randomUUID();
       const resolvedRefs = refs.map((ref) => ({ ...ref, resolved: this.objectExists(ref.targetObjectId) }));
 
@@ -345,7 +358,25 @@ export class SqliteStorage implements StoragePort {
   }
 }
 
-function normalizePutInput(input: VersionWriteInput): {
+function isInvalidSessionIdentity(input: VersionWriteInput): boolean {
+  if (input.objectType !== 'session') return false;
+  return typeof input.sessionId !== 'string' || input.sessionId.trim().length === 0;
+}
+
+function computeIdempotencyFingerprint(input: VersionWriteInput): {
+  contentStructHash: string;
+  fileBytesHash: string | null;
+} {
+  const contentStructJson = canonicalJson(input.contentStruct, 'contentStruct');
+  const fileBytesBlob = input.fileBytes == null ? null : Buffer.from(input.fileBytes);
+
+  return {
+    contentStructHash: sha256(contentStructJson),
+    fileBytesHash: fileBytesBlob ? sha256(fileBytesBlob) : null,
+  };
+}
+
+function normalizePutInput(input: VersionWriteInput, txTime: string): {
   txTime: string;
   charCount: number | null;
   contentStructJson: string;
@@ -371,7 +402,6 @@ function normalizePutInput(input: VersionWriteInput): {
     charCount: input.charCount,
   });
 
-  const txTime = input.txTime ?? new Date().toISOString();
   const charCount = normalizeCharCount(input.charCount);
   const contentStructJson = canonicalJson(input.contentStruct, 'contentStruct');
   const metadataJson = canonicalJson(input.metadata, 'metadata');

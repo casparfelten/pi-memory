@@ -1,7 +1,7 @@
 # Implementation SSOT v1 — Agentic Context Loading
 
-Status: **Canonical agentic implementation SSOT (design; not implemented)**
-Date: 2026-03-03
+Status: **Canonical agentic implementation SSOT (active context-loading implementation contract)**
+Date: 2026-03-10
 
 Behavioral authority:
 - `docs/intent-ssot-v1.md`
@@ -45,6 +45,7 @@ Any additional loader requirement must be added via `StoragePort` contract chang
 
 Primary anchor is session identity:
 - canonical typed envelope field `session_id`.
+- session writes without non-empty `session_id` are invalid at the DB boundary (`invalid_session_id`) and must not be treated as recoverable loader state.
 
 Session HEAD resolution model:
 1. resolve current `session` object version,

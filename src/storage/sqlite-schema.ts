@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS object_versions (
   file_bytes_blob     BLOB,
 
   path                TEXT,
-  session_id          TEXT,
+  session_id          TEXT CHECK (session_id IS NULL OR length(trim(session_id)) > 0),
   tool_name           TEXT,
   status              TEXT,
   char_count          INTEGER,
@@ -80,6 +80,20 @@ CREATE TABLE IF NOT EXISTS write_idempotency (
   created_seq         INTEGER NOT NULL,
   created_at          TEXT NOT NULL
 );
+
+CREATE TRIGGER IF NOT EXISTS trg_session_version_requires_session_id
+BEFORE INSERT ON object_versions
+FOR EACH ROW
+WHEN EXISTS (
+  SELECT 1
+  FROM objects o
+  WHERE o.object_id = NEW.object_id
+    AND o.object_type = 'session'
+)
+AND (NEW.session_id IS NULL OR length(trim(NEW.session_id)) = 0)
+BEGIN
+  SELECT RAISE(ABORT, 'invalid_session_id');
+END;
 `;
 
 export const SQLITE_INDEX_SQL = `

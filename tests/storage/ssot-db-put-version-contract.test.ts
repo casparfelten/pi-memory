@@ -22,6 +22,82 @@ describe('DB SSOT §5 putVersion transaction contract', () => {
     await cleanupStorageHarness(harness);
   });
 
+  it('§5.0 step 0: session write with null/empty/whitespace session_id returns validation failure', async () => {
+    const invalidInputs = [
+      { requestId: 'pv-s0-null', sessionId: null as string | null | undefined },
+      { requestId: 'pv-s0-missing', sessionId: undefined as string | null | undefined },
+      { requestId: 'pv-s0-empty', sessionId: '' as string | null | undefined },
+      { requestId: 'pv-s0-space', sessionId: '   ' as string | null | undefined },
+    ];
+
+    for (const invalid of invalidInputs) {
+      const result = await harness.storage.putVersion(
+        baseWrite({
+          requestId: invalid.requestId,
+          objectId: `session:${invalid.requestId}`,
+          objectType: 'session',
+          sessionId: invalid.sessionId,
+          contentStruct: {
+            chat_ref: { target_object_id: 'chat:any', mode: 'dynamic', ref_kind: 'chat' },
+            active_set: [],
+            inactive_set: [],
+            pinned_set: [],
+          },
+          metadata: {},
+        }),
+      );
+
+      expect(result).toEqual({ ok: false, validation: true, reason: 'invalid_session_id' });
+
+      const objectRow = inspect
+        .prepare('SELECT object_id FROM objects WHERE object_id = ?')
+        .get(`session:${invalid.requestId}`) as { object_id: string } | undefined;
+      expect(objectRow).toBeUndefined();
+    }
+  });
+
+  it('§5 ordering rule: session identity validation runs before idempotency decisions', async () => {
+    const first = await harness.storage.putVersion(
+      baseWrite({
+        requestId: 'pv-s0-order',
+        objectId: 'session:pv-s0-order',
+        objectType: 'session',
+        sessionId: 'pv-s0',
+        contentStruct: {
+          chat_ref: { target_object_id: 'chat:any', mode: 'dynamic', ref_kind: 'chat' },
+          active_set: [],
+          inactive_set: [],
+          pinned_set: [],
+        },
+        metadata: {},
+      }),
+    );
+
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    const second = await harness.storage.putVersion(
+      baseWrite({
+        requestId: 'pv-s0-order',
+        objectId: 'session:pv-s0-order',
+        objectType: 'session',
+        sessionId: '   ',
+        expectedCurrentVersionId: 'wrong-head',
+        contentStruct: {
+          chat_ref: 'not-a-ref',
+        },
+        metadata: {},
+      }),
+    );
+
+    expect(second).toEqual({ ok: false, validation: true, reason: 'invalid_session_id' });
+
+    const versionCount = inspect
+      .prepare('SELECT COUNT(*) as c FROM object_versions WHERE object_id = ?')
+      .get('session:pv-s0-order') as { c: number };
+    expect(versionCount.c).toBe(1);
+  });
+
   it('§5.1 step 1: idempotency replay returns prior record when request_id + hashes match', async () => {
     const input = baseWrite({
       requestId: 'pv-s1',
@@ -87,6 +163,39 @@ describe('DB SSOT §5 putVersion transaction contract', () => {
         objectType: 'file',
         expectedCurrentVersionId: 'wrong-head',
         contentStruct: { body: 'changed' },
+        metadata: {},
+      }),
+    );
+
+    expect(result).toEqual({ ok: false, conflict: true, reason: 'idempotency_mismatch' });
+  });
+
+  it('§5 ordering rule: idempotency decision runs before ref validation for reused request_id', async () => {
+    await harness.storage.putVersion(
+      baseWrite({
+        requestId: 'pv-order-refs',
+        objectId: 'session:pv-order-refs',
+        objectType: 'session',
+        sessionId: 'pv-order-refs',
+        contentStruct: {
+          chat_ref: { target_object_id: 'chat:any', mode: 'dynamic', ref_kind: 'chat' },
+          active_set: [],
+          inactive_set: [],
+          pinned_set: [],
+        },
+        metadata: {},
+      }),
+    );
+
+    const result = await harness.storage.putVersion(
+      baseWrite({
+        requestId: 'pv-order-refs',
+        objectId: 'session:pv-order-refs',
+        objectType: 'session',
+        sessionId: 'pv-order-refs',
+        contentStruct: {
+          chat_ref: 'not-a-ref',
+        },
         metadata: {},
       }),
     );

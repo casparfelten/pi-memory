@@ -104,6 +104,7 @@ describe('DB SSOT §3 schema + §4 indexes', () => {
 
     expect(createSql.sql).toContain('CHECK (json_valid(content_struct_json))');
     expect(createSql.sql).toContain('CHECK (json_valid(metadata_json))');
+    expect(createSql.sql).toContain('CHECK (session_id IS NULL OR length(trim(session_id)) > 0)');
     expect(createSql.sql).toContain('UNIQUE (object_id, version_no)');
     expect(createSql.sql).toContain('version_id          TEXT NOT NULL UNIQUE');
   });
@@ -167,6 +168,47 @@ describe('DB SSOT §3 schema + §4 indexes', () => {
 
     const requestId = columns.find((c) => c.name === 'request_id');
     expect(requestId?.pk).toBe(1);
+  });
+
+  it('§3 trigger: session object_versions insert requires non-empty session_id', () => {
+    const trigger = inspect
+      .prepare("SELECT name, sql FROM sqlite_master WHERE type='trigger' AND name='trg_session_version_requires_session_id'")
+      .get() as { name: string; sql: string } | undefined;
+
+    expect(trigger?.name).toBe('trg_session_version_requires_session_id');
+    expect(trigger?.sql).toContain("RAISE(ABORT, 'invalid_session_id')");
+
+    inspect
+      .prepare(
+        `INSERT INTO objects (
+          object_id, object_type, locked, created_seq, updated_seq, created_at, updated_at, current_version_id
+        ) VALUES ('session:trigger', 'session', 0, 1, 1, 't', 't', NULL)`,
+      )
+      .run();
+
+    expect(() => {
+      inspect
+        .prepare(
+          `INSERT INTO object_versions (
+            version_id, object_id, version_no, tx_time,
+            writer_id, writer_kind, write_reason,
+            content_struct_json, file_bytes_blob,
+            path, session_id, tool_name, status, char_count,
+            metadata_json,
+            content_struct_hash, file_bytes_hash, metadata_hash, refs_hash, object_hash,
+            hash_algo, hash_schema_version
+          ) VALUES (
+            'v-trigger-bad', 'session:trigger', 1, 't',
+            'w', 'client', 'manual',
+            '{}', NULL,
+            NULL, NULL, NULL, NULL, NULL,
+            '{}',
+            'a', NULL, 'b', 'c', 'd',
+            'sha256', 1
+          )`,
+        )
+        .run();
+    }).toThrow('invalid_session_id');
   });
 
   it('§3 enum/CHECK constraints reject invalid data at DB level', () => {

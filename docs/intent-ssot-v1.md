@@ -1,7 +1,7 @@
 # Storage & Tracking Subsystem — v1 Intent Spec
 
-Status: **Canonical intent spec (design contract; not implemented)**
-Date: 2026-03-03
+Status: **Canonical intent spec (authoritative behavior contract)**
+Date: 2026-03-10
 
 ---
 
@@ -113,6 +113,12 @@ Idempotency decision runs before optimistic guard checks.
 Optional `expectedCurrentVersionId` guard is supported.
 Mismatch => `version_conflict`.
 
+### 4.5 Session identity guard
+
+For `object_type='session'` writes, typed envelope `session_id` is mandatory and must be a non-empty, non-whitespace string.
+
+Violation must return explicit validation failure reason `invalid_session_id`.
+
 ---
 
 ## 5) Structured reference model
@@ -175,7 +181,7 @@ Sessions are core, not optional.
 `session` is a normal object type with immutable versions.
 
 Canonical session tracking is represented in session payload + typed envelope:
-- typed envelope: `session_id` (canonical)
+- typed envelope: `session_id` (canonical, required non-null/non-empty for session writes)
 - payload: `chat_ref`, `system_prompt_ref?`, `active_set[]`, `inactive_set[]`, `pinned_set[]`
 
 ### 6.2 Session references
@@ -208,11 +214,12 @@ Hash inputs use canonical serialization and fixed ordering.
 
 ---
 
-## 8) Conflict outcomes (v1)
+## 8) Write outcomes (v1)
 
-`putVersion` returns either:
+`putVersion` returns one of:
 
-- success `{ ok: true, record, idempotentReplay }`, or
+- success `{ ok: true, record, idempotentReplay }`,
+- validation failure `{ ok: false, validation: true, reason: 'invalid_session_id' }`,
 - conflict `{ ok: false, conflict: true, reason }` where `reason` is one of:
   - `version_conflict`
   - `idempotency_mismatch`

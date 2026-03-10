@@ -288,6 +288,35 @@ describe('DB SSOT §6 references, §7 sessions, §8 hashes', () => {
     expect(obj.object_type).toBe('session');
   });
 
+  it('§7.1 session writes reject missing/blank session_id with explicit validation result', async () => {
+    const invalidCases = [
+      { requestId: 'r71-invalid-null', sessionId: null as string | null | undefined },
+      { requestId: 'r71-invalid-missing', sessionId: undefined as string | null | undefined },
+      { requestId: 'r71-invalid-empty', sessionId: '' as string | null | undefined },
+      { requestId: 'r71-invalid-space', sessionId: '   ' as string | null | undefined },
+    ];
+
+    for (const invalid of invalidCases) {
+      const result = await harness.storage.putVersion(
+        baseWrite({
+          requestId: invalid.requestId,
+          objectId: `session:${invalid.requestId}`,
+          objectType: 'session',
+          sessionId: invalid.sessionId,
+          contentStruct: {
+            chat_ref: { target_object_id: 'chat:r71-invalid', mode: 'dynamic', ref_kind: 'chat' },
+            active_set: [],
+            inactive_set: [],
+            pinned_set: [],
+          },
+          metadata: {},
+        }),
+      );
+
+      expect(result).toEqual({ ok: false, validation: true, reason: 'invalid_session_id' });
+    }
+  });
+
   it('§7.1 session payload shape required fields: chat_ref + active_set + inactive_set + pinned_set', async () => {
     // Spec requires these keys in session payload shape.
     // This test intentionally enforces that contract.

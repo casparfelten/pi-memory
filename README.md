@@ -5,8 +5,9 @@ Context management layer for LLM agents. Controls what is kept, retrieved, and s
 ## Status
 
 - Active storage/runtime path is SQLite-based.
-- Storage is implemented behind `StoragePort` with SSOT DB conformance tests.
+- Storage is implemented behind `StoragePort` with DB SSOT conformance tests (`tests/storage/`).
 - Runtime (`SelfContextManager`) uses `StoragePort` and no longer depends on the legacy HTTP backend.
+- Agentic/context-loading conformance tests live under `tests/agentic/`.
 
 ## Canonical docs
 
@@ -19,7 +20,7 @@ Context management layer for LLM agents. Controls what is kept, retrieved, and s
 
 ```text
 src/                        # Active TypeScript source (core context manager + sqlite storage)
-tests/                      # Active tests (vitest)
+tests/                      # Active tests (vitest; storage + agentic + phase/e2e)
 docs/                       # Canonical specs + docs index
   archive/                  # Historical snapshots (non-normative)
 ```
@@ -27,7 +28,7 @@ docs/                       # Canonical specs + docs index
 ## Removal note
 
 - Legacy external-backend client, scripts, and integration tests were removed.
-- Legacy `tests/ssot-conformance/` suite was removed with that backend model; current conformance coverage is under `tests/storage/` and runtime phase/e2e tests.
+- Legacy `tests/ssot-conformance/` suite was removed with that backend model; current conformance coverage is under `tests/storage/`, `tests/agentic/`, and runtime phase/e2e tests.
 - Historical archive docs may still reference the removed backend; treat those as non-normative history.
 
 ## License

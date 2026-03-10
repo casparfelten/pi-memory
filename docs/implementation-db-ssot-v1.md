@@ -1,7 +1,7 @@
 # Implementation SSOT v1 — Database (SQLite)
 
-Status: **Canonical DB implementation SSOT (design; not implemented)**
-Date: 2026-03-03
+Status: **Canonical DB implementation SSOT (active SQLite implementation contract)**
+Date: 2026-03-10
 
 Behavioral authority:
 - `docs/intent-ssot-v1.md` (intent semantics)
@@ -51,7 +51,7 @@ v1 excludes:
 3. `version_no` is strictly increasing per object.
 4. `tx_seq` is strictly increasing globally.
 5. At most one HEAD per object (`objects.current_version_id`).
-6. `path/session_id/tool_name/status/char_count` are canonical typed envelope fields.
+6. `path/session_id/tool_name/status/char_count` are canonical typed envelope fields; for `object_type='session'`, `session_id` is mandatory non-null/non-empty.
 7. `content_struct_json` is canonical semantic payload.
 8. `metadata_json` is persisted auxiliary payload.
 9. `doc_references` rows are derived only from explicit structured refs in `content_struct_json`.
@@ -92,7 +92,7 @@ CREATE TABLE object_versions (
 
   -- canonical typed envelope fields (not convenience copies)
   path                TEXT,
-  session_id          TEXT,
+  session_id          TEXT CHECK (session_id IS NULL OR length(trim(session_id)) > 0),
   tool_name           TEXT,
   status              TEXT,
   char_count          INTEGER,
@@ -144,6 +144,20 @@ CREATE TABLE write_idempotency (
   created_seq         INTEGER NOT NULL,
   created_at          TEXT NOT NULL
 );
+
+CREATE TRIGGER trg_session_version_requires_session_id
+BEFORE INSERT ON object_versions
+FOR EACH ROW
+WHEN EXISTS (
+  SELECT 1
+  FROM objects o
+  WHERE o.object_id = NEW.object_id
+    AND o.object_type = 'session'
+)
+AND (NEW.session_id IS NULL OR length(trim(NEW.session_id)) = 0)
+BEGIN
+  SELECT RAISE(ABORT, 'invalid_session_id');
+END;
 ```
 
 ---
@@ -172,8 +186,10 @@ CREATE INDEX idx_idempotency_object ON write_idempotency(object_id);
 
 ## 5) Write transaction contract (`putVersion`)
 
-Single SQL transaction.
+Validation + write flow:
 
+0. Validate session identity requirements:
+   - if `objectType='session'` and `sessionId` is null/empty/whitespace, return validation failure `invalid_session_id`.
 1. Lookup `write_idempotency` by `request_id`.
    - if present and hashes match (`content_struct_hash`, `file_bytes_hash`): return prior record (`idempotentReplay=true`).
    - if present and mismatch: return conflict `idempotency_mismatch`.
@@ -188,7 +204,9 @@ Single SQL transaction.
 10. Insert `write_idempotency` row.
 11. Commit and return success.
 
-Ordering rule: idempotency decision happens before optimistic conflict checks.
+Ordering rule:
+- session identity validation runs before transactional write steps,
+- idempotency decision happens before optimistic conflict checks.
 
 ---
 
@@ -248,7 +266,7 @@ interface SessionContent {
 }
 ```
 
-`session_id` typed envelope column is canonical session identity anchor across versions.
+`session_id` typed envelope column is canonical session identity anchor across versions and is required non-null/non-empty for `session` writes.
 
 No separate mutable session-state table is canonical in this profile.
 
@@ -293,6 +311,7 @@ export interface VersionWriteInput {
   fileBytes?: Uint8Array | null;
 
   path?: string | null;
+  // required and non-empty when objectType='session'
   sessionId?: string | null;
   toolName?: string | null;
   status?: string | null;
@@ -351,6 +370,7 @@ export interface ReferenceRecord {
 export interface StoragePort {
   putVersion(input: VersionWriteInput): Promise<
     | { ok: true; record: VersionRecord; idempotentReplay: boolean }
+    | { ok: false; validation: true; reason: 'invalid_session_id' }
     | { ok: false; conflict: true; reason: 'version_conflict' | 'idempotency_mismatch' }
   >;
 

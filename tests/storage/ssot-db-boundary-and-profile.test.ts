@@ -147,7 +147,7 @@ describe('DB SSOT §1 profile, §9 boundary, §10 out-of-scope', () => {
     }
   });
 
-  it('§9 putVersion returns success/ conflict union shapes as specified', async () => {
+  it('§9 putVersion returns success / validation / conflict union shapes as specified', async () => {
     const success = await harness.storage.putVersion(
       baseWrite({
         requestId: 'p9-success',
@@ -163,6 +163,24 @@ describe('DB SSOT §1 profile, §9 boundary, §10 out-of-scope', () => {
 
     expect(typeof success.record.versionId).toBe('string');
     expect(typeof success.idempotentReplay).toBe('boolean');
+
+    const validation = await harness.storage.putVersion(
+      baseWrite({
+        requestId: 'p9-validation',
+        objectId: 'session:p9',
+        objectType: 'session',
+        sessionId: '   ',
+        contentStruct: {
+          chat_ref: { target_object_id: 'chat:p9', mode: 'dynamic', ref_kind: 'chat' },
+          active_set: [],
+          inactive_set: [],
+          pinned_set: [],
+        },
+        metadata: {},
+      }),
+    );
+
+    expect(validation).toEqual({ ok: false, validation: true, reason: 'invalid_session_id' });
 
     const conflict = await harness.storage.putVersion(
       baseWrite({
